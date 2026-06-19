@@ -1,0 +1,18 @@
+[Unit]
+Description=ZK-20 古建筑消防预警平台前端服务
+After=network.target zk-20-backend.service
+
+[Service]
+Type=simple
+User=zk-20
+WorkingDirectory=/opt/zk-20/frontend
+ExecStart=/usr/bin/serve -s dist -l 3000
+Restart=always
+RestartSec=5
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=zk-20-frontend
+
+[Install]
+WantedBy=multi-user.target
