@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use sqlx::{sqlite::SqlitePoolOptions, SqlitePool, Row};
+use std::path::Path;
 use std::time::Duration;
 use uuid::Uuid;
 
@@ -12,11 +13,35 @@ use crate::models::{
 
 pub type DbPool = SqlitePool;
 
+fn ensure_data_dir(database_url: &str) {
+    let url = database_url.strip_prefix("sqlite://").unwrap_or(database_url);
+    let url = url.strip_prefix("sqlite:").unwrap_or(url);
+    let path = url.split('?').next().unwrap_or("");
+    
+    if !path.is_empty() {
+        if let Some(parent) = Path::new(path).parent() {
+            if !parent.as_os_str().is_empty() {
+                if let Err(e) = std::fs::create_dir_all(parent) {
+                    eprintln!("Warning: Failed to create data directory {:?}: {}", parent, e);
+                }
+            }
+        }
+    }
+}
+
 pub async fn init_pool(database_url: &str) -> DbPool {
+    ensure_data_dir(database_url);
+    
+    let connect_url = if database_url.starts_with("sqlite://") || database_url.starts_with("sqlite:") {
+        database_url.to_string()
+    } else {
+        format!("sqlite:{}", database_url)
+    };
+
     SqlitePoolOptions::new()
         .max_connections(10)
         .acquire_timeout(Duration::from_secs(30))
-        .connect(database_url)
+        .connect(&connect_url)
         .await
         .expect("Failed to create database pool")
 }

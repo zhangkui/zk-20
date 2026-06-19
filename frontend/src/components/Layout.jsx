@@ -36,7 +36,7 @@ const Layout = (props) => {
   };
 
   return (
-    <div class="layout">
+    <div class="app layout">
       <aside class={`layout-sidebar ${state.ui.sidebarOpen ? 'open' : ''}`}>
         <div class="sidebar-logo">
           <span class="sidebar-logo-icon">🔥</span>

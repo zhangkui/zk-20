@@ -4,7 +4,6 @@ import Layout from './components/Layout';
 import { actions } from './store/appStore';
 import './styles/thermal.css';
 
-import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import Buildings from './pages/Buildings';
 import ThermalMonitor from './pages/ThermalMonitor';
@@ -12,6 +11,48 @@ import PatrolMap from './pages/PatrolMap';
 import Alerts from './pages/Alerts';
 import ResponsiblePersons from './pages/ResponsiblePersons';
 import Statistics from './pages/Statistics';
+
+const DashboardPage = () => (
+  <Layout>
+    <Dashboard />
+  </Layout>
+);
+
+const BuildingsPage = () => (
+  <Layout>
+    <Buildings />
+  </Layout>
+);
+
+const ThermalMonitorPage = () => (
+  <Layout>
+    <ThermalMonitor />
+  </Layout>
+);
+
+const PatrolMapPage = () => (
+  <Layout>
+    <PatrolMap />
+  </Layout>
+);
+
+const AlertsPage = () => (
+  <Layout>
+    <Alerts />
+  </Layout>
+);
+
+const ResponsiblePersonsPage = () => (
+  <Layout>
+    <ResponsiblePersons />
+  </Layout>
+);
+
+const StatisticsPage = () => (
+  <Layout>
+    <Statistics />
+  </Layout>
+);
 
 function App() {
   onMount(async () => {
@@ -24,18 +65,14 @@ function App() {
 
   return (
     <Router>
-      <div class="app">
-        <Layout>
-          <Route path="/" component={Dashboard} />
-          <Route path="/dashboard" component={Dashboard} />
-          <Route path="/buildings" component={Buildings} />
-          <Route path="/thermal-monitor" component={ThermalMonitor} />
-          <Route path="/patrol-map" component={PatrolMap} />
-          <Route path="/alerts" component={Alerts} />
-          <Route path="/responsible-persons" component={ResponsiblePersons} />
-          <Route path="/statistics" component={Statistics} />
-        </Layout>
-      </div>
+      <Route path="/" component={DashboardPage} />
+      <Route path="/dashboard" component={DashboardPage} />
+      <Route path="/buildings" component={BuildingsPage} />
+      <Route path="/thermal-monitor" component={ThermalMonitorPage} />
+      <Route path="/patrol-map" component={PatrolMapPage} />
+      <Route path="/alerts" component={AlertsPage} />
+      <Route path="/responsible-persons" component={ResponsiblePersonsPage} />
+      <Route path="/statistics" component={StatisticsPage} />
     </Router>
   );
 }

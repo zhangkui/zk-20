@@ -1,11 +1,20 @@
-const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8080/ws';
+const WS_URL = import.meta.env.VITE_WS_URL || '/ws';
 const HEARTBEAT_INTERVAL = 30000;
 const RECONNECT_DELAY = 5000;
+
+function resolveWsUrl(url) {
+  if (url.startsWith('ws://') || url.startsWith('wss://')) {
+    return url;
+  }
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const host = window.location.host;
+  return `${protocol}//${host}${url.startsWith('/') ? url : '/' + url}`;
+}
 
 class WebSocketClient {
   constructor() {
     this.ws = null;
-    this.url = WS_URL;
+    this.url = resolveWsUrl(WS_URL);
     this.listeners = new Map();
     this.subscriptions = new Set();
     this.heartbeatTimer = null;

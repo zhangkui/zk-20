@@ -3,6 +3,18 @@ import ThermalImage from './ThermalImage';
 import api from '../services/api';
 import { formatDateTime } from '../utils/date';
 
+function useState(initial) {
+  const [val, setVal] = createSignal(initial);
+  const setter = (arg) => {
+    if (typeof arg === 'function') {
+      setVal(prev => arg(prev));
+    } else {
+      setVal(arg);
+    }
+  };
+  return [val, setter];
+}
+
 export default function AlertPlayback(props) {
   const alertId = () => props.alertId;
   const [playbackData, setPlaybackData] = useState(null);
@@ -346,9 +358,4 @@ function formatTime(seconds) {
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-}
-
-function useState(initial) {
-  const [val, setVal] = createSignal(initial);
-  return [val, setVal];
 }

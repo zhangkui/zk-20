@@ -1,0 +1,259 @@
+1781861443: mosquitto version 2.0.22 starting
+1781861443: Config loaded from /mosquitto/config/mosquitto.conf.
+1781861443: Opening ipv4 listen socket on port 1883.
+1781861443: Opening ipv6 listen socket on port 1883.
+1781861443: Opening websockets listen socket on port 9001.
+1781861443: mosquitto version 2.0.22 running
+1781861444: New connection from 192.168.32.3:45346 on port 1883.
+1781861444: New client connected from 192.168.32.3:45346 as zk-20-backend-docker (p2, c1, k30).
+1781861444: No will message specified.
+1781861444: Sending CONNACK to zk-20-backend-docker (0, 0)
+1781861444: Received SUBSCRIBE from zk-20-backend-docker
+1781861444: 	thermal/+/data (QoS 1)
+1781861444: zk-20-backend-docker 1 thermal/+/data
+1781861444: Sending SUBACK to zk-20-backend-docker
+1781861444: Received SUBSCRIBE from zk-20-backend-docker
+1781861444: 	patrol/+/location (QoS 1)
+1781861444: zk-20-backend-docker 1 patrol/+/location
+1781861444: Sending SUBACK to zk-20-backend-docker
+1781861444: Received SUBSCRIBE from zk-20-backend-docker
+1781861444: 	device/+/heartbeat (QoS 1)
+1781861444: zk-20-backend-docker 1 device/+/heartbeat
+1781861444: Sending SUBACK to zk-20-backend-docker
+1781861444: Received SUBSCRIBE from zk-20-backend-docker
+1781861444: 	device/+/status (QoS 1)
+1781861444: zk-20-backend-docker 1 device/+/status
+1781861444: Sending SUBACK to zk-20-backend-docker
+1781861474: Received PINGREQ from zk-20-backend-docker
+1781861474: Sending PINGRESP to zk-20-backend-docker
+1781861505: Received PINGREQ from zk-20-backend-docker
+1781861505: Sending PINGRESP to zk-20-backend-docker
+1781861537: Received PINGREQ from zk-20-backend-docker
+1781861537: Sending PINGRESP to zk-20-backend-docker
+1781861568: Received PINGREQ from zk-20-backend-docker
+1781861568: Sending PINGRESP to zk-20-backend-docker
+1781861599: Received PINGREQ from zk-20-backend-docker
+1781861599: Sending PINGRESP to zk-20-backend-docker
+1781861630: Received PINGREQ from zk-20-backend-docker
+1781861630: Sending PINGRESP to zk-20-backend-docker
+1781861661: Received PINGREQ from zk-20-backend-docker
+1781861661: Sending PINGRESP to zk-20-backend-docker
+1781861663: Client zk-20-backend-docker closed its connection.
+1781861664: New connection from 192.168.32.3:58730 on port 1883.
+1781861664: New client connected from 192.168.32.3:58730 as zk-20-backend-docker (p2, c1, k30).
+1781861664: No will message specified.
+1781861664: Sending CONNACK to zk-20-backend-docker (0, 0)
+1781861664: Received SUBSCRIBE from zk-20-backend-docker
+1781861664: 	thermal/+/data (QoS 1)
+1781861664: zk-20-backend-docker 1 thermal/+/data
+1781861664: Sending SUBACK to zk-20-backend-docker
+1781861664: Received SUBSCRIBE from zk-20-backend-docker
+1781861664: 	patrol/+/location (QoS 1)
+1781861664: zk-20-backend-docker 1 patrol/+/location
+1781861664: Sending SUBACK to zk-20-backend-docker
+1781861664: Received SUBSCRIBE from zk-20-backend-docker
+1781861664: 	device/+/heartbeat (QoS 1)
+1781861664: zk-20-backend-docker 1 device/+/heartbeat
+1781861664: Sending SUBACK to zk-20-backend-docker
+1781861664: Received SUBSCRIBE from zk-20-backend-docker
+1781861664: 	device/+/status (QoS 1)
+1781861664: zk-20-backend-docker 1 device/+/status
+1781861664: Sending SUBACK to zk-20-backend-docker
+1781861695: Received PINGREQ from zk-20-backend-docker
+1781861695: Sending PINGRESP to zk-20-backend-docker
+1781861726: Received PINGREQ from zk-20-backend-docker
+1781861726: Sending PINGRESP to zk-20-backend-docker
+1781861757: Received PINGREQ from zk-20-backend-docker
+1781861757: Sending PINGRESP to zk-20-backend-docker
+1781861788: Received PINGREQ from zk-20-backend-docker
+1781861788: Sending PINGRESP to zk-20-backend-docker
+1781861819: Client zk-20-backend-docker closed its connection.
+1781861820: New connection from 192.168.32.3:57922 on port 1883.
+1781861820: New client connected from 192.168.32.3:57922 as zk-20-backend-docker (p2, c1, k30).
+1781861820: No will message specified.
+1781861820: Sending CONNACK to zk-20-backend-docker (0, 0)
+1781861820: Received SUBSCRIBE from zk-20-backend-docker
+1781861820: 	thermal/+/data (QoS 1)
+1781861820: zk-20-backend-docker 1 thermal/+/data
+1781861820: Sending SUBACK to zk-20-backend-docker
+1781861820: Received SUBSCRIBE from zk-20-backend-docker
+1781861820: 	patrol/+/location (QoS 1)
+1781861820: zk-20-backend-docker 1 patrol/+/location
+1781861820: Sending SUBACK to zk-20-backend-docker
+1781861820: Received SUBSCRIBE from zk-20-backend-docker
+1781861820: 	device/+/heartbeat (QoS 1)
+1781861820: zk-20-backend-docker 1 device/+/heartbeat
+1781861820: Sending SUBACK to zk-20-backend-docker
+1781861820: Received SUBSCRIBE from zk-20-backend-docker
+1781861820: 	device/+/status (QoS 1)
+1781861820: zk-20-backend-docker 1 device/+/status
+1781861820: Sending SUBACK to zk-20-backend-docker
+1781861851: Received PINGREQ from zk-20-backend-docker
+1781861851: Sending PINGRESP to zk-20-backend-docker
+1781861882: Received PINGREQ from zk-20-backend-docker
+1781861882: Sending PINGRESP to zk-20-backend-docker
+1781861913: Received PINGREQ from zk-20-backend-docker
+1781861913: Sending PINGRESP to zk-20-backend-docker
+1781861944: Received PINGREQ from zk-20-backend-docker
+1781861944: Sending PINGRESP to zk-20-backend-docker
+1781861975: Received PINGREQ from zk-20-backend-docker
+1781861975: Sending PINGRESP to zk-20-backend-docker
+1781862006: Received PINGREQ from zk-20-backend-docker
+1781862006: Sending PINGRESP to zk-20-backend-docker
+1781862037: Received PINGREQ from zk-20-backend-docker
+1781862037: Sending PINGRESP to zk-20-backend-docker
+1781862068: Received PINGREQ from zk-20-backend-docker
+1781862068: Sending PINGRESP to zk-20-backend-docker
+1781862099: Received PINGREQ from zk-20-backend-docker
+1781862099: Sending PINGRESP to zk-20-backend-docker
+1781862130: Received PINGREQ from zk-20-backend-docker
+1781862130: Sending PINGRESP to zk-20-backend-docker
+1781862161: Received PINGREQ from zk-20-backend-docker
+1781862161: Sending PINGRESP to zk-20-backend-docker
+1781862192: Received PINGREQ from zk-20-backend-docker
+1781862192: Sending PINGRESP to zk-20-backend-docker
+1781862223: Received PINGREQ from zk-20-backend-docker
+1781862223: Sending PINGRESP to zk-20-backend-docker
+1781862254: Received PINGREQ from zk-20-backend-docker
+1781862254: Sending PINGRESP to zk-20-backend-docker
+1781862262: Client zk-20-backend-docker closed its connection.
+1781862263: New connection from 192.168.32.3:45902 on port 1883.
+1781862263: New client connected from 192.168.32.3:45902 as zk-20-backend-docker (p2, c1, k30).
+1781862263: No will message specified.
+1781862263: Sending CONNACK to zk-20-backend-docker (0, 0)
+1781862263: Received SUBSCRIBE from zk-20-backend-docker
+1781862263: 	thermal/+/data (QoS 1)
+1781862263: zk-20-backend-docker 1 thermal/+/data
+1781862263: Sending SUBACK to zk-20-backend-docker
+1781862263: Received SUBSCRIBE from zk-20-backend-docker
+1781862263: 	patrol/+/location (QoS 1)
+1781862263: zk-20-backend-docker 1 patrol/+/location
+1781862263: Sending SUBACK to zk-20-backend-docker
+1781862263: Received SUBSCRIBE from zk-20-backend-docker
+1781862263: 	device/+/heartbeat (QoS 1)
+1781862263: zk-20-backend-docker 1 device/+/heartbeat
+1781862263: Sending SUBACK to zk-20-backend-docker
+1781862263: Received SUBSCRIBE from zk-20-backend-docker
+1781862263: 	device/+/status (QoS 1)
+1781862263: zk-20-backend-docker 1 device/+/status
+1781862263: Sending SUBACK to zk-20-backend-docker
+1781862294: Received PINGREQ from zk-20-backend-docker
+1781862294: Sending PINGRESP to zk-20-backend-docker
+1781862325: Received PINGREQ from zk-20-backend-docker
+1781862325: Sending PINGRESP to zk-20-backend-docker
+1781862356: Received PINGREQ from zk-20-backend-docker
+1781862356: Sending PINGRESP to zk-20-backend-docker
+1781862387: Received PINGREQ from zk-20-backend-docker
+1781862387: Sending PINGRESP to zk-20-backend-docker
+1781862419: Received PINGREQ from zk-20-backend-docker
+1781862419: Sending PINGRESP to zk-20-backend-docker
+1781862449: Received PINGREQ from zk-20-backend-docker
+1781862449: Sending PINGRESP to zk-20-backend-docker
+1781862480: Received PINGREQ from zk-20-backend-docker
+1781862480: Sending PINGRESP to zk-20-backend-docker
+1781862512: Received PINGREQ from zk-20-backend-docker
+1781862512: Sending PINGRESP to zk-20-backend-docker
+1781862542: Received PINGREQ from zk-20-backend-docker
+1781862542: Sending PINGRESP to zk-20-backend-docker
+1781862574: Received PINGREQ from zk-20-backend-docker
+1781862574: Sending PINGRESP to zk-20-backend-docker
+1781862605: Received PINGREQ from zk-20-backend-docker
+1781862605: Sending PINGRESP to zk-20-backend-docker
+1781862636: Received PINGREQ from zk-20-backend-docker
+1781862636: Sending PINGRESP to zk-20-backend-docker
+1781862667: Received PINGREQ from zk-20-backend-docker
+1781862667: Sending PINGRESP to zk-20-backend-docker
+1781862698: Received PINGREQ from zk-20-backend-docker
+1781862698: Sending PINGRESP to zk-20-backend-docker
+1781862729: Received PINGREQ from zk-20-backend-docker
+1781862729: Sending PINGRESP to zk-20-backend-docker
+1781862760: Received PINGREQ from zk-20-backend-docker
+1781862760: Sending PINGRESP to zk-20-backend-docker
+1781862791: Received PINGREQ from zk-20-backend-docker
+1781862791: Sending PINGRESP to zk-20-backend-docker
+1781862822: Received PINGREQ from zk-20-backend-docker
+1781862822: Sending PINGRESP to zk-20-backend-docker
+1781862853: Received PINGREQ from zk-20-backend-docker
+1781862853: Sending PINGRESP to zk-20-backend-docker
+1781862884: Received PINGREQ from zk-20-backend-docker
+1781862884: Sending PINGRESP to zk-20-backend-docker
+1781862915: Received PINGREQ from zk-20-backend-docker
+1781862915: Sending PINGRESP to zk-20-backend-docker
+1781862946: Received PINGREQ from zk-20-backend-docker
+1781862946: Sending PINGRESP to zk-20-backend-docker
+1781862977: Received PINGREQ from zk-20-backend-docker
+1781862977: Sending PINGRESP to zk-20-backend-docker
+1781863008: Received PINGREQ from zk-20-backend-docker
+1781863008: Sending PINGRESP to zk-20-backend-docker
+1781863039: Received PINGREQ from zk-20-backend-docker
+1781863039: Sending PINGRESP to zk-20-backend-docker
+1781863070: Received PINGREQ from zk-20-backend-docker
+1781863070: Sending PINGRESP to zk-20-backend-docker
+1781863101: Received PINGREQ from zk-20-backend-docker
+1781863101: Sending PINGRESP to zk-20-backend-docker
+1781863132: Received PINGREQ from zk-20-backend-docker
+1781863132: Sending PINGRESP to zk-20-backend-docker
+1781863163: Received PINGREQ from zk-20-backend-docker
+1781863163: Sending PINGRESP to zk-20-backend-docker
+1781863194: Received PINGREQ from zk-20-backend-docker
+1781863194: Sending PINGRESP to zk-20-backend-docker
+1781863225: Received PINGREQ from zk-20-backend-docker
+1781863225: Sending PINGRESP to zk-20-backend-docker
+1781863256: Received PINGREQ from zk-20-backend-docker
+1781863256: Sending PINGRESP to zk-20-backend-docker
+1781863287: Received PINGREQ from zk-20-backend-docker
+1781863287: Sending PINGRESP to zk-20-backend-docker
+1781863305: Saving in-memory database to /mosquitto/data//mosquitto.db.
+1781863318: Received PINGREQ from zk-20-backend-docker
+1781863318: Sending PINGRESP to zk-20-backend-docker
+1781863349: Received PINGREQ from zk-20-backend-docker
+1781863349: Sending PINGRESP to zk-20-backend-docker
+1781863380: Received PINGREQ from zk-20-backend-docker
+1781863380: Sending PINGRESP to zk-20-backend-docker
+1781863411: Received PINGREQ from zk-20-backend-docker
+1781863411: Sending PINGRESP to zk-20-backend-docker
+1781863442: Received PINGREQ from zk-20-backend-docker
+1781863442: Sending PINGRESP to zk-20-backend-docker
+1781863473: Received PINGREQ from zk-20-backend-docker
+1781863473: Sending PINGRESP to zk-20-backend-docker
+1781863504: Received PINGREQ from zk-20-backend-docker
+1781863504: Sending PINGRESP to zk-20-backend-docker
+1781863535: Received PINGREQ from zk-20-backend-docker
+1781863535: Sending PINGRESP to zk-20-backend-docker
+1781863566: Received PINGREQ from zk-20-backend-docker
+1781863566: Sending PINGRESP to zk-20-backend-docker
+1781863597: Received PINGREQ from zk-20-backend-docker
+1781863597: Sending PINGRESP to zk-20-backend-docker
+1781863628: Received PINGREQ from zk-20-backend-docker
+1781863628: Sending PINGRESP to zk-20-backend-docker
+1781863659: Received PINGREQ from zk-20-backend-docker
+1781863659: Sending PINGRESP to zk-20-backend-docker
+1781863690: Received PINGREQ from zk-20-backend-docker
+1781863690: Sending PINGRESP to zk-20-backend-docker
+1781863721: Received PINGREQ from zk-20-backend-docker
+1781863721: Sending PINGRESP to zk-20-backend-docker
+1781863752: Received PINGREQ from zk-20-backend-docker
+1781863752: Sending PINGRESP to zk-20-backend-docker
+1781863784: Received PINGREQ from zk-20-backend-docker
+1781863784: Sending PINGRESP to zk-20-backend-docker
+1781863814: Received PINGREQ from zk-20-backend-docker
+1781863814: Sending PINGRESP to zk-20-backend-docker
+1781863845: Received PINGREQ from zk-20-backend-docker
+1781863845: Sending PINGRESP to zk-20-backend-docker
+1781863876: Received PINGREQ from zk-20-backend-docker
+1781863876: Sending PINGRESP to zk-20-backend-docker
+1781863907: Received PINGREQ from zk-20-backend-docker
+1781863907: Sending PINGRESP to zk-20-backend-docker
+1781863938: Received PINGREQ from zk-20-backend-docker
+1781863938: Sending PINGRESP to zk-20-backend-docker
+1781863969: Received PINGREQ from zk-20-backend-docker
+1781863969: Sending PINGRESP to zk-20-backend-docker
+1781864000: Received PINGREQ from zk-20-backend-docker
+1781864000: Sending PINGRESP to zk-20-backend-docker
+1781864032: Received PINGREQ from zk-20-backend-docker
+1781864032: Sending PINGRESP to zk-20-backend-docker
+1781864062: Received PINGREQ from zk-20-backend-docker
+1781864062: Sending PINGRESP to zk-20-backend-docker
+1781864070: Client zk-20-backend-docker closed its connection.
+1781864070: mosquitto version 2.0.22 terminating
+1781864070: Saving in-memory database to /mosquitto/data//mosquitto.db.

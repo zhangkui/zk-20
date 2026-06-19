@@ -36,6 +36,7 @@ fn buildings_routes() -> impl HttpServiceFactory {
 fn devices_routes() -> impl HttpServiceFactory {
     web::scope("/devices")
         .route("", web::post().to(handlers::devices::create))
+        .route("", web::get().to(handlers::devices::list))
         .route("/{id}", web::get().to(handlers::devices::get_by_id))
         .route("/building/{building_id}", web::get().to(handlers::devices::list_by_building))
         .route("/{id}/heartbeat", web::put().to(handlers::devices::update_heartbeat))
@@ -54,6 +55,7 @@ fn thermal_data_routes() -> impl HttpServiceFactory {
 fn hotspots_routes() -> impl HttpServiceFactory {
     web::scope("/hotspots")
         .route("", web::post().to(handlers::hotspots::create))
+        .route("", web::get().to(handlers::hotspots::list))
         .route("/{id}", web::get().to(handlers::hotspots::get_by_id))
         .route("/building/{building_id}", web::get().to(handlers::hotspots::list_by_building))
         .route("/risk", web::get().to(handlers::hotspots::list_by_risk))
@@ -89,12 +91,15 @@ fn alerts_routes() -> impl HttpServiceFactory {
         .route("/status", web::get().to(handlers::alerts::list_by_status))
         .route("/{id}/acknowledge", web::put().to(handlers::alerts::acknowledge))
         .route("/{id}/resolve", web::put().to(handlers::alerts::resolve))
+        .route("/{id}/playback", web::get().to(handlers::alert_playback::get_by_alert_id))
+        .route("/{id}/playback", web::post().to(handlers::alert_playback::create))
         .route("/{id}", web::delete().to(handlers::alerts::delete))
 }
 
 fn responsible_persons_routes() -> impl HttpServiceFactory {
     web::scope("/responsible-persons")
         .route("", web::post().to(handlers::responsible_persons::create))
+        .route("", web::get().to(handlers::responsible_persons::list))
         .route("/{id}", web::get().to(handlers::responsible_persons::get_by_id))
         .route("/building/{building_id}", web::get().to(handlers::responsible_persons::list_by_building))
         .route("/building/{building_id}/active", web::get().to(handlers::responsible_persons::list_active_by_building))

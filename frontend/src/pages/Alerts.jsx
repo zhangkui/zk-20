@@ -6,6 +6,18 @@ import AlertPlayback from '../components/AlertPlayback';
 import wsClient from '../services/websocket';
 import api from '../services/api';
 
+function useState(initial) {
+  const [val, setVal] = createSignal(initial);
+  const setter = (arg) => {
+    if (typeof arg === 'function') {
+      setVal(prev => arg(prev));
+    } else {
+      setVal(arg);
+    }
+  };
+  return [val, setter];
+}
+
 const Alerts = () => {
   const [selectedAlert, setSelectedAlert] = useState(null);
   const [showPlayback, setShowPlayback] = useState(false);
@@ -144,7 +156,7 @@ const Alerts = () => {
       return;
     }
     try {
-      await api.alerts.acknowledge(alertId, { personnel_id: personnel.id });
+      await api.alerts.acknowledge(alertId, personnel.id);
       await actions.loadAlerts();
     } catch (err) {
       console.error('Failed to acknowledge alert:', err);
@@ -158,7 +170,7 @@ const Alerts = () => {
       return;
     }
     try {
-      await api.alerts.resolve(alertId, { personnel_id: personnel.id });
+      await api.alerts.resolve(alertId, personnel.id);
       await actions.loadAlerts();
     } catch (err) {
       console.error('Failed to resolve alert:', err);
@@ -360,10 +372,5 @@ const Alerts = () => {
     </div>
   );
 };
-
-function useState(initial) {
-  const [val, setVal] = createSignal(initial);
-  return [val, setVal];
-}
 
 export default Alerts;

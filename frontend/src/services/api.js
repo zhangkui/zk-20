@@ -66,6 +66,8 @@ export const devices = {
 
 export const thermalData = {
   list: (params = {}) => get('/thermal-data', params),
+  get: (id) => get(`/thermal-data/${id}`),
+  getById: (id) => get(`/thermal-data/${id}`),
   getByDevice: (deviceId, params = {}) => get(`/thermal-data/device/${deviceId}`, params),
   getByBuilding: (buildingId, params = {}) => get(`/thermal-data/building/${buildingId}/time-range`, params),
   create: (data) => post('/thermal-data', data),
