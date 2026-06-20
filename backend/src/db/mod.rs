@@ -1759,3 +1759,240 @@ pub mod alert_playback {
         .await
     }
 }
+
+pub mod seed {
+    use super::*;
+    use crate::models::{
+        CreateBuilding, CreateThermalDevice, CreatePatrolPersonnel,
+        CreateResponsiblePerson, CreateAlert,
+    };
+
+    async fn check_and_seed_buildings(pool: &DbPool) -> Result<Vec<Uuid>, sqlx::Error> {
+        let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM buildings")
+            .fetch_one(pool)
+            .await?;
+
+        if count > 0 {
+            let ids: Vec<Uuid> = sqlx::query_scalar("SELECT id FROM buildings ORDER BY created_at ASC")
+                .fetch_all(pool)
+                .await?;
+            return Ok(ids);
+        }
+
+        log::info!("Seeding buildings data...");
+        let buildings_data = vec![
+            ("大雄宝殿", "北京市东城区景山前街4号", 39.9163, 116.3972, "宫殿建筑", 1500.0, 1750, 3, "high"),
+            ("藏经阁", "北京市东城区景山前街4号", 39.9165, 116.3975, "楼阁建筑", 800.0, 1800, 2, "medium"),
+            ("钟楼", "北京市东城区景山前街4号", 39.9167, 116.3978, "钟楼建筑", 300.0, 1760, 2, "medium"),
+            ("鼓楼", "北京市东城区钟楼湾临字9号", 39.9424, 116.4025, "鼓楼建筑", 400.0, 1770, 2, "low"),
+            ("故宫角楼", "北京市东城区景山前街4号", 39.9140, 116.3910, "角楼建筑", 200.0, 1780, 1, "high"),
+        ];
+
+        let mut building_ids = Vec::new();
+        for (name, address, lat, lng, btype, area, year, floors, risk) in buildings_data {
+            let building = buildings::create(pool, CreateBuilding {
+                name: name.to_string(),
+                description: Some(format!("{} - 古建筑", name)),
+                address: address.to_string(),
+                latitude: lat,
+                longitude: lng,
+                area,
+                building_type: btype.to_string(),
+                construction_year: Some(year),
+                floors: Some(floors),
+                risk_level: Some(risk.to_string()),
+                geometry: None,
+            }).await?;
+            building_ids.push(building.id);
+        }
+
+        Ok(building_ids)
+    }
+
+    async fn check_and_seed_devices(pool: &DbPool, building_ids: &[Uuid]) -> Result<Vec<Uuid>, sqlx::Error> {
+        let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM thermal_devices")
+            .fetch_one(pool)
+            .await?;
+
+        if count > 0 {
+            let ids: Vec<Uuid> = sqlx::query_scalar("SELECT id FROM thermal_devices ORDER BY created_at ASC")
+                .fetch_all(pool)
+                .await?;
+            return Ok(ids);
+        }
+
+        log::info!("Seeding thermal devices data...");
+        let mut device_ids = Vec::new();
+
+        for (idx, building_id) in building_ids.iter().enumerate() {
+            for i in 0..2 {
+                let device = thermal_devices::create(pool, CreateThermalDevice {
+                    building_id: *building_id,
+                    name: format!("建筑{}-热成像-{}", idx + 1, i + 1),
+                    device_code: format!("CAM-{:02}-{:02}", idx + 1, i + 1),
+                    model: Some("FLIR-Tau-2".to_string()),
+                    ip_address: Some(format!("192.168.1.{}", 100 + idx * 2 + i)),
+                    latitude: 39.9 + (idx as f64) * 0.001,
+                    longitude: 116.4 + (idx as f64) * 0.001,
+                    fov_width: 45.0,
+                    fov_height: 37.5,
+                    installation_height: 3.5,
+                }).await?;
+                device_ids.push(device.id);
+            }
+        }
+
+        Ok(device_ids)
+    }
+
+    async fn check_and_seed_personnel(pool: &DbPool) -> Result<Vec<Uuid>, sqlx::Error> {
+        let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM patrol_personnel")
+            .fetch_one(pool)
+            .await?;
+
+        if count > 0 {
+            let ids: Vec<Uuid> = sqlx::query_scalar("SELECT id FROM patrol_personnel ORDER BY created_at ASC")
+                .fetch_all(pool)
+                .await?;
+            return Ok(ids);
+        }
+
+        log::info!("Seeding patrol personnel data...");
+        let personnel_data = vec![
+            ("张三", "XF20240001", "13812345671", "巡防队长"),
+            ("李四", "XF20240002", "13812345672", "巡防队员"),
+            ("王五", "XF20240003", "13812345673", "巡防队员"),
+            ("赵六", "XF20240004", "13812345674", "安全员"),
+        ];
+
+        let mut personnel_ids = Vec::new();
+        for (name, emp_id, phone, position) in personnel_data {
+            let personnel = patrol_personnel::create(pool, CreatePatrolPersonnel {
+                name: name.to_string(),
+                employee_id: emp_id.to_string(),
+                phone: phone.to_string(),
+                department: "消防安保部".to_string(),
+                position: position.to_string(),
+            }).await?;
+            personnel_ids.push(personnel.id);
+        }
+
+        Ok(personnel_ids)
+    }
+
+    async fn check_and_seed_responsible_persons(pool: &DbPool, building_ids: &[Uuid]) -> Result<(), sqlx::Error> {
+        let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM responsible_persons")
+            .fetch_one(pool)
+            .await?;
+
+        if count > 0 {
+            return Ok(());
+        }
+
+        log::info!("Seeding responsible persons data...");
+        let names = vec!["王刚", "李强", "杨伟", "刘军", "陈明"];
+
+        for (idx, building_id) in building_ids.iter().enumerate() {
+            responsible_persons::create(pool, CreateResponsiblePerson {
+                building_id: *building_id,
+                name: names[idx % names.len()].to_string(),
+                position: "消防安全管理员".to_string(),
+                phone: format!("139{:08}", idx * 1000 + 1),
+                email: Some(format!("admin{}@example.com", idx + 1)),
+                responsibility: "全面负责建筑消防安全管理工作".to_string(),
+            }).await?;
+        }
+
+        Ok(())
+    }
+
+    async fn check_and_seed_alerts(pool: &DbPool, building_ids: &[Uuid]) -> Result<(), sqlx::Error> {
+        let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM alerts")
+            .fetch_one(pool)
+            .await?;
+
+        if count > 0 {
+            return Ok(());
+        }
+
+        log::info!("Seeding alerts data...");
+        let alert_types = vec![
+            ("hotspot", "检测到异常热点", "critical"),
+            ("fire", "火灾隐患告警", "high"),
+            ("device_offline", "设备离线告警", "medium"),
+            ("patrol_missing", "巡防人员异常", "low"),
+        ];
+
+        for (idx, building_id) in building_ids.iter().enumerate() {
+            for i in 0..2 {
+                let (alert_type, title, severity) = &alert_types[(idx + i) % alert_types.len()];
+                alerts::create(pool, CreateAlert {
+                    building_id: *building_id,
+                    hotspot_id: None,
+                    alert_type: alert_type.to_string(),
+                    title: title.to_string(),
+                    description: Some(format!("{}，请及时处理", title)),
+                    severity: severity.to_string(),
+                    latitude: Some(39.9 + (idx as f64) * 0.001),
+                    longitude: Some(116.4 + (idx as f64) * 0.001),
+                }).await?;
+            }
+        }
+
+        Ok(())
+    }
+
+    async fn check_and_seed_thermal_data(pool: &DbPool, building_ids: &[Uuid], device_ids: &[Uuid]) -> Result<(), sqlx::Error> {
+        let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM thermal_data")
+            .fetch_one(pool)
+            .await?;
+
+        if count > 0 {
+            return Ok(());
+        }
+
+        log::info!("Seeding thermal data...");
+        for (i, device_id) in device_ids.iter().take(3).enumerate() {
+            let building_id = building_ids[i / 2 % building_ids.len()];
+            let width = 32;
+            let height = 24;
+            let mut matrix = Vec::new();
+            let mut flat = Vec::new();
+            for y in 0..height {
+                let mut row = Vec::new();
+                for x in 0..width {
+                    let temp = 25.0 + ((x + y) as f64) * 0.2 + (i as f64) * 2.0;
+                    row.push(temp);
+                    flat.push(temp);
+                }
+                matrix.push(row);
+            }
+
+            use crate::models::CreateThermalData;
+            thermal_data::create(pool, CreateThermalData {
+                device_id: *device_id,
+                building_id,
+                temperature_matrix: serde_json::to_string(&matrix).unwrap(),
+                min_temp: flat.iter().cloned().fold(f64::INFINITY, f64::min),
+                max_temp: flat.iter().cloned().fold(f64::NEG_INFINITY, f64::max),
+                avg_temp: flat.iter().sum::<f64>() / flat.len() as f64,
+                resolution_width: width,
+                resolution_height: height,
+                is_night: false,
+            }).await?;
+        }
+
+        Ok(())
+    }
+
+    pub async fn seed_if_empty(pool: &DbPool) -> Result<(), sqlx::Error> {
+        let building_ids = check_and_seed_buildings(pool).await?;
+        let device_ids = check_and_seed_devices(pool, &building_ids).await?;
+        check_and_seed_personnel(pool).await?;
+        check_and_seed_responsible_persons(pool, &building_ids).await?;
+        check_and_seed_thermal_data(pool, &building_ids, &device_ids).await?;
+        check_and_seed_alerts(pool, &building_ids).await?;
+        log::info!("Database seeding completed.");
+        Ok(())
+    }
+}

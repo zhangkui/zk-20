@@ -23,7 +23,7 @@ def create_building(name, address, lat, lng, building_type):
     response = requests.post(f"{BASE_URL}/buildings", json=data)
     if response.status_code == 201:
         result = response.json()
-        print(f"✓ Created building: {name} (ID: {result['data']['id']})
+        print(f"✓ Created building: {name} (ID: {result['data']['id']})")
         return result['data']
     else:
         print(f"✗ Failed to create building {name}: {response.status_code} - {response.text}")
@@ -35,7 +35,7 @@ def create_device(building_id, name, device_code):
         "name": name,
         "device_code": device_code,
         "model": "FLIR-Tau-2",
-        "ip_address": f"192.168.1.{random.randint(100, 200}",
+        "ip_address": f"192.168.1.{random.randint(100, 200)}",
         "latitude": 39.9 + random.uniform(-0.002, 0.002),
         "longitude": 116.4 + random.uniform(-0.002, 0.002),
         "fov_width": 45.0,
@@ -113,6 +113,34 @@ def create_thermal_data(device_id, building_id):
         return response.json()['data']
     return None
 
+def create_alert(building_id, device_id=None):
+    alert_types = ["hotspot", "fire", "device_offline", "patrol_missing"]
+    severities = ["critical", "high", "medium", "low"]
+    titles = {
+        "hotspot": "检测到异常热点",
+        "fire": "火灾隐患告警",
+        "device_offline": "设备离线告警",
+        "patrol_missing": "巡防人员异常",
+    }
+    alert_type = random.choice(alert_types)
+    data = {
+        "building_id": building_id,
+        "hotspot_id": None,
+        "alert_type": alert_type,
+        "title": titles[alert_type],
+        "description": f"{titles[alert_type]}，请及时处理",
+        "severity": random.choice(severities),
+        "latitude": 39.9 + random.uniform(-0.002, 0.002),
+        "longitude": 116.4 + random.uniform(-0.002, 0.002),
+    }
+    response = requests.post(f"{BASE_URL}/alerts", json=data)
+    if response.status_code == 201:
+        print(f"    ✓ Created alert: {data['title']}")
+        return response.json()['data']
+    else:
+        print(f"    ✗ Failed to create alert: {response.status_code}")
+        return None
+
 def main():
     print("=" * 60)
     print("ZK-20 古建筑消防预警平台 - 测试数据生成工具")
@@ -135,21 +163,35 @@ def main():
 
     print()
 
+    devices = []
     for building in buildings:
         print(f"\n设备 for {building['name']}:")
         for i in range(2):
-            create_device(building['id'], f"{building['name']}-热成像-{i+1}", f"CAM-{building['name'][:2]}-{i+1:02d}")
+            device = create_device(building['id'], f"{building['name']}-热成像-{i+1}", f"CAM-{building['name'][:2]}-{i+1:02d}")
+            if device:
+                devices.append(device)
 
     print("\n巡防人员:")
     personnel_names = ["张三", "李四", "王五", "赵六"]
     for i, name in enumerate(personnel_names):
-        create_personnel(name, f"XF{2024:04d}")
+        create_personnel(name, f"XF{20240000+i+1:08d}")
 
     print("\n责任人员:")
     for building in buildings:
         print(f"\n  {building['name']}:")
         create_responsible_person(building['id'], f"王{random.choice(['刚', '强', '伟', '军'])}", "消防安全管理员")
         create_responsible_person(building['id'], f"李{random.choice(['明', '华', '丽', '芳'])}", "消防安全员")
+
+    print("\n热成像数据:")
+    for device in devices[:3]:
+        building_id = device['building_id']
+        for i in range(3):
+            create_thermal_data(device['id'], building_id)
+
+    print("\n告警数据:")
+    for building in buildings[:3]:
+        for i in range(2):
+            create_alert(building['id'])
 
     print("\n" + "=" * 60)
     print("测试数据生成完成！")

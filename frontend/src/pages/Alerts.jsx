@@ -44,15 +44,15 @@ const Alerts = () => {
   const getLevelClass = (level) => {
     switch (level) {
       case 'critical':
-        return 'bg-red-600 text-white';
+        return 'badge-error';
       case 'high':
-        return 'bg-orange-500 text-white';
+        return 'badge-warning';
       case 'medium':
-        return 'bg-yellow-500 text-white';
+        return 'badge-info';
       case 'low':
-        return 'bg-blue-500 text-white';
+        return 'badge-success';
       default:
-        return 'bg-gray-500 text-white';
+        return 'badge-default';
     }
   };
 
@@ -74,13 +74,13 @@ const Alerts = () => {
   const getStatusClass = (status) => {
     switch (status) {
       case 'pending':
-        return 'bg-red-100 text-red-800';
+        return 'badge-error';
       case 'acknowledged':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'badge-warning';
       case 'resolved':
-        return 'bg-green-100 text-green-800';
+        return 'badge-success';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'badge-default';
     }
   };
 
@@ -188,135 +188,136 @@ const Alerts = () => {
   };
 
   return (
-    <div class="p-6">
-      <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-800 mb-2">告警事件管理</h1>
-        <p class="text-gray-600">实时监控和处理消防安全告警事件</p>
+    <div>
+      <div class="mb-lg">
+        <h2>告警事件管理</h2>
+        <div class="text-secondary text-sm mt-sm">实时监控和处理消防安全告警事件</div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-        <div class="bg-white rounded-lg shadow p-4">
-          <div class="text-gray-500 text-sm">告警总数</div>
-          <div class="text-2xl font-bold text-gray-800">{stats().total}</div>
+      <div class="grid grid-4 mb-lg">
+        <div class="card">
+          <div class="text-secondary mb-sm">告警总数</div>
+          <div class="text-3xl font-bold text-primary">{stats().total}</div>
         </div>
-        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
-          <div class="text-gray-500 text-sm">紧急</div>
-          <div class="text-2xl font-bold text-red-600">{stats().critical}</div>
+        <div class="card">
+          <div class="text-secondary mb-sm">紧急</div>
+          <div class="text-3xl font-bold text-error">{stats().critical}</div>
         </div>
-        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-orange-500">
-          <div class="text-gray-500 text-sm">待处理</div>
-          <div class="text-2xl font-bold text-orange-600">{stats().pending}</div>
+        <div class="card">
+          <div class="text-secondary mb-sm">待处理</div>
+          <div class="text-3xl font-bold text-warning">{stats().pending}</div>
         </div>
-        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-yellow-500">
-          <div class="text-gray-500 text-sm">处理中</div>
-          <div class="text-2xl font-bold text-yellow-600">{stats().acknowledged}</div>
-        </div>
-        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
-          <div class="text-gray-500 text-sm">已解决</div>
-          <div class="text-2xl font-bold text-green-600">{stats().resolved}</div>
+        <div class="card">
+          <div class="text-secondary mb-sm">已解决</div>
+          <div class="text-3xl font-bold text-success">{stats().resolved}</div>
         </div>
       </div>
 
-      <div class="bg-white rounded-lg shadow mb-6">
-        <div class="p-4 border-b flex flex-wrap gap-4">
-          <div class="flex-1 min-w-[200px]">
-            <input
-              type="text"
-              placeholder="搜索告警..."
-              value={searchQuery()}
-              onInput={(e) => setSearchQuery(e.target.value)}
-              class="w-full px-3 py-2 border rounded"
-            />
+      <div class="card mb-lg">
+        <div class="card-header">告警列表</div>
+        <div class="card-body">
+          <div class="flex-between mb-md" style={{ flexWrap: 'wrap', gap: 'var(--spacing-md)' }}>
+            <div style={{ display: 'flex', gap: 'var(--spacing-sm)', flexWrap: 'wrap', flex: 1, minWidth: '200px' }}>
+              <input
+                type="text"
+                placeholder="搜索告警..."
+                value={searchQuery()}
+                onInput={(e) => setSearchQuery(e.target.value)}
+                class="form-input"
+                style={{ width: '200px' }}
+              />
+              <select
+                value={filterStatus()}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                class="form-select"
+                style={{ width: '140px' }}
+              >
+                <option value="all">全部状态</option>
+                <option value="pending">待处理</option>
+                <option value="acknowledged">已确认</option>
+                <option value="resolved">已解决</option>
+              </select>
+              <select
+                value={filterSeverity()}
+                onChange={(e) => setFilterSeverity(e.target.value)}
+                class="form-select"
+                style={{ width: '140px' }}
+              >
+                <option value="all">全部级别</option>
+                <option value="critical">紧急</option>
+                <option value="high">高</option>
+                <option value="medium">中</option>
+                <option value="low">低</option>
+              </select>
+              <select
+                value={filterBuilding()}
+                onChange={(e) => setFilterBuilding(e.target.value)}
+                class="form-select"
+                style={{ width: '160px' }}
+              >
+                <option value="all">全部建筑</option>
+                {(state.buildings || []).map(b => (
+                  <option value={b.id}>{b.name}</option>
+                ))}
+              </select>
+            </div>
+            <button
+              onClick={() => actions.loadAlerts()}
+              class="btn btn-primary btn-sm"
+            >
+              刷新
+            </button>
           </div>
-          <select
-            value={filterStatus()}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            class="px-3 py-2 border rounded"
-          >
-            <option value="all">全部状态</option>
-            <option value="pending">待处理</option>
-            <option value="acknowledged">已确认</option>
-            <option value="resolved">已解决</option>
-          </select>
-          <select
-            value={filterSeverity()}
-            onChange={(e) => setFilterSeverity(e.target.value)}
-            class="px-3 py-2 border rounded"
-          >
-            <option value="all">全部级别</option>
-            <option value="critical">紧急</option>
-            <option value="high">高</option>
-            <option value="medium">中</option>
-            <option value="low">低</option>
-          </select>
-          <select
-            value={filterBuilding()}
-            onChange={(e) => setFilterBuilding(e.target.value)}
-            class="px-3 py-2 border rounded"
-          >
-            <option value="all">全部建筑</option>
-            {(state.buildings || []).map(b => (
-              <option value={b.id}>{b.name}</option>
-            ))}
-          </select>
-          <button
-            onClick={() => actions.loadAlerts()}
-            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            刷新
-          </button>
-        </div>
 
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead class="bg-gray-50">
+          <table>
+            <thead>
               <tr>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">告警时间</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">类型</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">标题</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">级别</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">建筑</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">温度</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
+                <th>告警时间</th>
+                <th>类型</th>
+                <th>标题</th>
+                <th>级别</th>
+                <th>建筑</th>
+                <th>位置</th>
+                <th>状态</th>
+                <th>操作</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-200">
+            <tbody>
               {filteredAlerts().map((alert) => (
-                <tr key={alert.id} class="hover:bg-gray-50">
-                  <td class="px-4 py-3">
-                    <div class="text-sm font-medium text-gray-900">{formatDateTime(alert.created_at)}</div>
-                    <div class="text-xs text-gray-500">{formatRelative(alert.created_at)}</div>
+                <tr key={alert.id}>
+                  <td>
+                    <div class="font-medium">{formatDateTime(alert.created_at)}</div>
+                    <div class="text-muted text-sm">{formatRelative(alert.created_at)}</div>
                   </td>
-                  <td class="px-4 py-3 text-sm">{getAlertTypeText(alert.alert_type)}</td>
-                  <td class="px-4 py-3">
-                    <div class="text-sm font-medium text-gray-900">{alert.title}</div>
-                    {alert.description && <div class="text-xs text-gray-500">{alert.description}</div>}
+                  <td>{getAlertTypeText(alert.alert_type)}</td>
+                  <td>
+                    <div class="font-medium">{alert.title}</div>
+                    {alert.description && <div class="text-muted text-sm">{alert.description}</div>}
                   </td>
-                  <td class="px-4 py-3">
-                    <span class={`px-2 py-1 text-xs rounded-full ${getLevelClass(alert.severity)}`}>
+                  <td>
+                    <span class={`badge ${getLevelClass(alert.severity)}`}>
                       {getLevelText(alert.severity)}
                     </span>
                   </td>
-                  <td class="px-4 py-3 text-sm">{getBuildingName(alert.building_id)}</td>
-                  <td class="px-4 py-3">
+                  <td>{getBuildingName(alert.building_id)}</td>
+                  <td>
                     {alert.latitude && alert.longitude ? (
-                      <span class="text-sm text-gray-900">
+                      <span>
                         {alert.latitude.toFixed(4)}, {alert.longitude.toFixed(4)}
                       </span>
                     ) : '-'}
                   </td>
-                  <td class="px-4 py-3">
-                    <span class={`px-2 py-1 text-xs rounded-full ${getStatusClass(alert.status)}`}>
+                  <td>
+                    <span class={`badge ${getStatusClass(alert.status)}`}>
                       {getStatusText(alert.status)}
                     </span>
                   </td>
-                  <td class="px-4 py-3">
-                    <div class="flex gap-2">
+                  <td>
+                    <div style={{ display: 'flex', gap: 'var(--spacing-xs)' }}>
                       {alert.status === 'pending' && (
                         <button
                           onClick={() => handleAcknowledge(alert.id)}
-                          class="px-3 py-1 text-xs bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                          class="btn btn-warning btn-sm"
                         >
                           确认
                         </button>
@@ -324,14 +325,14 @@ const Alerts = () => {
                       {alert.status === 'acknowledged' && (
                         <button
                           onClick={() => handleResolve(alert.id)}
-                          class="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
+                          class="btn btn-success btn-sm"
                         >
                           解决
                         </button>
                       )}
                       <button
                         onClick={() => handleViewPlayback(alert)}
-                        class="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                        class="btn btn-sm"
                       >
                         回放
                       </button>
@@ -341,29 +342,54 @@ const Alerts = () => {
               ))}
             </tbody>
           </table>
-        </div>
 
-        {filteredAlerts().length === 0 && (
-          <div class="p-12 text-center">
-            <div class="text-5xl mb-4">🔔</div>
-            <div class="text-gray-500">暂无告警数据</div>
-          </div>
-        )}
+          {filteredAlerts().length === 0 && (
+            <div class="text-center" style={{ padding: '60px 20px' }}>
+              <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔔</div>
+              <div class="text-secondary">暂无告警数据</div>
+            </div>
+          )}
+        </div>
       </div>
 
       {showPlayback() && selectedAlert() && (
-        <div class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-          <div class="bg-white rounded-lg max-w-5xl w-full max-h-[90vh] overflow-auto">
-            <div class="p-4 border-b flex justify-between items-center">
-              <h3 class="text-lg font-semibold">告警回放 - {selectedAlert().title}</h3>
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(0,0,0,0.8)',
+            padding: 'var(--spacing-lg)',
+          }}
+          onClick={() => setShowPlayback(false)}
+        >
+          <div
+            class="card"
+            style={{
+              width: '100%',
+              maxWidth: '1000px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div class="card-header flex-between">
+              <span>告警回放 - {selectedAlert().title}</span>
               <button
                 onClick={() => setShowPlayback(false)}
-                class="text-gray-500 hover:text-gray-700 text-2xl"
+                class="btn btn-sm"
+                style={{ border: 'none', background: 'transparent', fontSize: '24px', padding: 0 }}
               >
                 ×
               </button>
             </div>
-            <div class="p-4">
+            <div class="card-body">
               <AlertPlayback alertId={selectedAlert().id} />
             </div>
           </div>

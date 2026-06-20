@@ -92,6 +92,17 @@ export const actions = {
     }
   },
 
+  async createBuilding(data) {
+    try {
+      const building = await api.buildings.create(data);
+      setState('buildings', (buildings) => [building, ...buildings]);
+      return building;
+    } catch (error) {
+      console.error('Failed to create building:', error);
+      throw error;
+    }
+  },
+
   selectBuilding(building) {
     setState('selectedBuilding', building);
     if (building) {

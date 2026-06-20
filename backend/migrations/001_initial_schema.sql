@@ -121,7 +121,7 @@ CREATE INDEX IF NOT EXISTS idx_alerts_building_time ON alerts(building_id, creat
 CREATE INDEX IF NOT EXISTS idx_alerts_status ON alerts(status);
 CREATE INDEX IF NOT EXISTS idx_alerts_severity ON alerts(severity);
 
-CREATE TABLE IF NOT EXISTS alert_playbacks (
+CREATE TABLE IF NOT EXISTS alert_playback (
     id TEXT PRIMARY KEY,
     alert_id TEXT NOT NULL REFERENCES alerts(id) ON DELETE CASCADE,
     thermal_data_id TEXT REFERENCES thermal_data(id) ON DELETE SET NULL,

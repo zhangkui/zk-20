@@ -29,6 +29,12 @@ async fn main() -> std::io::Result<()> {
         return Err(std::io::Error::new(std::io::ErrorKind::Other, e.to_string()));
     }
 
+    log::info!("Seeding database if empty...");
+    if let Err(e) = db::seed::seed_if_empty(&pool).await {
+        log::error!("Failed to seed database: {}", e);
+        return Err(std::io::Error::new(std::io::ErrorKind::Other, e.to_string()));
+    }
+
     let ws_manager = websocket::WebSocketManager::new();
     let ws_manager_for_app = ws_manager.clone();
     let ws_manager_for_routes = ws_manager.clone();

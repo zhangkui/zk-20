@@ -11,6 +11,9 @@ import PatrolMap from './pages/PatrolMap';
 import Alerts from './pages/Alerts';
 import ResponsiblePersons from './pages/ResponsiblePersons';
 import Statistics from './pages/Statistics';
+import Map from './pages/Map';
+import Devices from './pages/Devices';
+import Patrol from './pages/Patrol';
 
 const DashboardPage = () => (
   <Layout>
@@ -54,6 +57,24 @@ const StatisticsPage = () => (
   </Layout>
 );
 
+const MapPage = () => (
+  <Layout>
+    <Map />
+  </Layout>
+);
+
+const DevicesPage = () => (
+  <Layout>
+    <Devices />
+  </Layout>
+);
+
+const PatrolPage = () => (
+  <Layout>
+    <Patrol />
+  </Layout>
+);
+
 function App() {
   onMount(async () => {
     await actions.initAll();
@@ -68,9 +89,12 @@ function App() {
       <Route path="/" component={DashboardPage} />
       <Route path="/dashboard" component={DashboardPage} />
       <Route path="/buildings" component={BuildingsPage} />
+      <Route path="/map" component={MapPage} />
+      <Route path="/devices" component={DevicesPage} />
       <Route path="/thermal-monitor" component={ThermalMonitorPage} />
       <Route path="/patrol-map" component={PatrolMapPage} />
       <Route path="/alerts" component={AlertsPage} />
+      <Route path="/patrol" component={PatrolPage} />
       <Route path="/responsible-persons" component={ResponsiblePersonsPage} />
       <Route path="/statistics" component={StatisticsPage} />
     </Router>
