@@ -21,6 +21,9 @@ pub fn init(cfg: &mut web::ServiceConfig, ws_manager: Arc<WebSocketManager>) {
             .service(alerts_routes())
             .service(responsible_persons_routes())
             .service(statistics_routes())
+            .service(alert_dispatches_routes())
+            .service(patrol_tasks_routes())
+            .service(building_inspections_routes())
     );
 }
 
@@ -92,6 +95,9 @@ fn alerts_routes() -> impl HttpServiceFactory {
         .route("/status", web::get().to(handlers::alerts::list_by_status))
         .route("/{id}/acknowledge", web::put().to(handlers::alerts::acknowledge))
         .route("/{id}/resolve", web::put().to(handlers::alerts::resolve))
+        .route("/{id}/dispatch", web::post().to(handlers::alerts::dispatch))
+        .route("/{id}/arrive", web::put().to(handlers::alerts::arrive))
+        .route("/{id}/escalate", web::put().to(handlers::alerts::escalate))
         .route("/{id}/playback", web::get().to(handlers::alert_playback::get_by_alert_id))
         .route("/{id}/playback", web::post().to(handlers::alert_playback::create))
         .route("/{id}", web::delete().to(handlers::alerts::delete))
@@ -114,4 +120,45 @@ fn statistics_routes() -> impl HttpServiceFactory {
         .route("/building/{building_id}/time-range", web::get().to(handlers::statistics::list_by_building_time_range))
         .route("/building/{building_id}/aggregate-by-hour", web::get().to(handlers::statistics::aggregate_by_hour))
         .route("/building/{building_id}/daily-summary", web::get().to(handlers::statistics::get_daily_summary))
+}
+
+fn alert_dispatches_routes() -> impl HttpServiceFactory {
+    web::scope("/alert-dispatches")
+        .route("", web::get().to(handlers::alert_dispatches::list))
+        .route("", web::post().to(handlers::alert_dispatches::create))
+        .route("/{id}", web::get().to(handlers::alert_dispatches::get_by_id))
+        .route("/alert/{alert_id}", web::get().to(handlers::alert_dispatches::list_by_alert))
+        .route("/personnel/{personnel_id}", web::get().to(handlers::alert_dispatches::list_by_personnel))
+        .route("/{id}/accept", web::put().to(handlers::alert_dispatches::accept))
+        .route("/{id}/arrive", web::put().to(handlers::alert_dispatches::arrive))
+        .route("/{id}/handle", web::put().to(handlers::alert_dispatches::handle))
+        .route("/{id}/close", web::put().to(handlers::alert_dispatches::close))
+        .route("/{id}", web::delete().to(handlers::alert_dispatches::delete))
+}
+
+fn patrol_tasks_routes() -> impl HttpServiceFactory {
+    web::scope("/patrol-tasks")
+        .route("", web::get().to(handlers::patrol_tasks::list))
+        .route("", web::post().to(handlers::patrol_tasks::create))
+        .route("/{id}", web::get().to(handlers::patrol_tasks::get_by_id))
+        .route("/building/{building_id}", web::get().to(handlers::patrol_tasks::list_by_building))
+        .route("/personnel/{personnel_id}", web::get().to(handlers::patrol_tasks::list_by_personnel))
+        .route("/status", web::get().to(handlers::patrol_tasks::list_by_status))
+        .route("/{id}/start", web::put().to(handlers::patrol_tasks::start))
+        .route("/{id}/complete", web::put().to(handlers::patrol_tasks::complete))
+        .route("/{id}", web::put().to(handlers::patrol_tasks::update))
+        .route("/{id}", web::delete().to(handlers::patrol_tasks::delete))
+        .route("/generate-daily", web::post().to(handlers::patrol_tasks::generate_daily))
+}
+
+fn building_inspections_routes() -> impl HttpServiceFactory {
+    web::scope("/building-inspections")
+        .route("", web::get().to(handlers::building_inspections::list))
+        .route("", web::post().to(handlers::building_inspections::create))
+        .route("/{id}", web::get().to(handlers::building_inspections::get_by_id))
+        .route("/building/{building_id}", web::get().to(handlers::building_inspections::list_by_building))
+        .route("/rectification-status", web::get().to(handlers::building_inspections::list_by_rectification_status))
+        .route("/{id}", web::put().to(handlers::building_inspections::update))
+        .route("/{id}/rectification", web::put().to(handlers::building_inspections::update_rectification))
+        .route("/{id}", web::delete().to(handlers::building_inspections::delete))
 }

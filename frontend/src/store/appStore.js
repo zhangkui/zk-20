@@ -9,6 +9,9 @@ const initialState = {
   patrolPersonnel: [],
   hotspots: [],
   thermalData: {},
+  alertDispatches: [],
+  patrolTasks: [],
+  buildingInspections: [],
   selectedBuilding: null,
   selectedDevice: null,
   ws: {
@@ -25,6 +28,9 @@ const initialState = {
       devices: false,
       alerts: false,
       patrolPersonnel: false,
+      alertDispatches: false,
+      patrolTasks: false,
+      buildingInspections: false,
     },
   },
 };
@@ -80,6 +86,123 @@ export const actions = {
       console.error('Failed to load patrol personnel:', error);
     } finally {
       setState('ui', 'loading', 'patrolPersonnel', false);
+    }
+  },
+
+  async loadAlertDispatches(params = {}) {
+    setState('ui', 'loading', 'alertDispatches', true);
+    try {
+      const data = await api.alertDispatches.list(params);
+      setState('alertDispatches', data);
+    } catch (error) {
+      console.error('Failed to load alert dispatches:', error);
+    } finally {
+      setState('ui', 'loading', 'alertDispatches', false);
+    }
+  },
+
+  async addAlertDispatch(data) {
+    try {
+      const dispatch = await api.alertDispatches.create(data);
+      setState('alertDispatches', (dispatches) => [dispatch, ...dispatches]);
+      return dispatch;
+    } catch (error) {
+      console.error('Failed to create alert dispatch:', error);
+      throw error;
+    }
+  },
+
+  async updateAlertDispatch(id, updates) {
+    setState('alertDispatches', (dispatches) =>
+      dispatches.map((d) => (d.id === id ? { ...d, ...updates } : d))
+    );
+  },
+
+  async removeAlertDispatch(id) {
+    try {
+      await api.alertDispatches.delete(id);
+      setState('alertDispatches', (dispatches) => dispatches.filter((d) => d.id !== id));
+    } catch (error) {
+      console.error('Failed to delete alert dispatch:', error);
+      throw error;
+    }
+  },
+
+  async loadPatrolTasks(params = {}) {
+    setState('ui', 'loading', 'patrolTasks', true);
+    try {
+      const data = await api.patrolTasks.list(params);
+      setState('patrolTasks', data);
+    } catch (error) {
+      console.error('Failed to load patrol tasks:', error);
+    } finally {
+      setState('ui', 'loading', 'patrolTasks', false);
+    }
+  },
+
+  async addPatrolTask(data) {
+    try {
+      const task = await api.patrolTasks.create(data);
+      setState('patrolTasks', (tasks) => [task, ...tasks]);
+      return task;
+    } catch (error) {
+      console.error('Failed to create patrol task:', error);
+      throw error;
+    }
+  },
+
+  async updatePatrolTask(id, updates) {
+    setState('patrolTasks', (tasks) =>
+      tasks.map((t) => (t.id === id ? { ...t, ...updates } : t))
+    );
+  },
+
+  async removePatrolTask(id) {
+    try {
+      await api.patrolTasks.delete(id);
+      setState('patrolTasks', (tasks) => tasks.filter((t) => t.id !== id));
+    } catch (error) {
+      console.error('Failed to delete patrol task:', error);
+      throw error;
+    }
+  },
+
+  async loadBuildingInspections(params = {}) {
+    setState('ui', 'loading', 'buildingInspections', true);
+    try {
+      const data = await api.buildingInspections.list(params);
+      setState('buildingInspections', data);
+    } catch (error) {
+      console.error('Failed to load building inspections:', error);
+    } finally {
+      setState('ui', 'loading', 'buildingInspections', false);
+    }
+  },
+
+  async addBuildingInspection(data) {
+    try {
+      const inspection = await api.buildingInspections.create(data);
+      setState('buildingInspections', (inspections) => [inspection, ...inspections]);
+      return inspection;
+    } catch (error) {
+      console.error('Failed to create building inspection:', error);
+      throw error;
+    }
+  },
+
+  async updateBuildingInspection(id, updates) {
+    setState('buildingInspections', (inspections) =>
+      inspections.map((i) => (i.id === id ? { ...i, ...updates } : i))
+    );
+  },
+
+  async removeBuildingInspection(id) {
+    try {
+      await api.buildingInspections.delete(id);
+      setState('buildingInspections', (inspections) => inspections.filter((i) => i.id !== id));
+    } catch (error) {
+      console.error('Failed to delete building inspection:', error);
+      throw error;
     }
   },
 

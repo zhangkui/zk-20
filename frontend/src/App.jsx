@@ -14,6 +14,9 @@ import Statistics from './pages/Statistics';
 import Map from './pages/Map';
 import Devices from './pages/Devices';
 import Patrol from './pages/Patrol';
+import AlertDispatch from './pages/AlertDispatch';
+import PatrolTasks from './pages/PatrolTasks';
+import BuildingLedger from './pages/BuildingLedger';
 
 const DashboardPage = () => (
   <Layout>
@@ -75,6 +78,24 @@ const PatrolPage = () => (
   </Layout>
 );
 
+const AlertDispatchPage = () => (
+  <Layout>
+    <AlertDispatch />
+  </Layout>
+);
+
+const PatrolTasksPage = () => (
+  <Layout>
+    <PatrolTasks />
+  </Layout>
+);
+
+const BuildingLedgerPage = () => (
+  <Layout>
+    <BuildingLedger />
+  </Layout>
+);
+
 function App() {
   onMount(async () => {
     await actions.initAll();
@@ -95,6 +116,9 @@ function App() {
       <Route path="/patrol-map" component={PatrolMapPage} />
       <Route path="/alerts" component={AlertsPage} />
       <Route path="/patrol" component={PatrolPage} />
+      <Route path="/alert-dispatch" component={AlertDispatchPage} />
+      <Route path="/patrol-tasks" component={PatrolTasksPage} />
+      <Route path="/building-ledger" component={BuildingLedgerPage} />
       <Route path="/responsible-persons" component={ResponsiblePersonsPage} />
       <Route path="/statistics" component={StatisticsPage} />
     </Router>

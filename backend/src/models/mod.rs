@@ -221,8 +221,172 @@ pub struct Alert {
     pub acknowledged_at: Option<DateTime<Utc>>,
     pub resolved_by: Option<Uuid>,
     pub resolved_at: Option<DateTime<Utc>>,
+    pub dispatched_to: Option<Uuid>,
+    pub dispatched_at: Option<DateTime<Utc>>,
+    pub arrived_at: Option<DateTime<Utc>>,
+    pub handling_notes: Option<String>,
+    pub escalation_level: i32,
+    pub ack_timeout_minutes: i32,
+    pub resolve_timeout_minutes: i32,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct AlertDispatch {
+    pub id: Uuid,
+    pub alert_id: Uuid,
+    pub dispatched_by: Option<Uuid>,
+    pub dispatched_to: Uuid,
+    pub dispatch_reason: String,
+    pub status: String,
+    pub dispatched_at: DateTime<Utc>,
+    pub accepted_at: Option<DateTime<Utc>>,
+    pub arrived_at: Option<DateTime<Utc>>,
+    pub handled_at: Option<DateTime<Utc>>,
+    pub closed_at: Option<DateTime<Utc>>,
+    pub handling_notes: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateAlertDispatch {
+    pub alert_id: Uuid,
+    pub dispatched_by: Option<Uuid>,
+    pub dispatched_to: Uuid,
+    pub dispatch_reason: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateAlertDispatch {
+    pub status: Option<String>,
+    pub handling_notes: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct PatrolTask {
+    pub id: Uuid,
+    pub building_id: Uuid,
+    pub personnel_id: Option<Uuid>,
+    pub task_name: String,
+    pub task_type: String,
+    pub risk_level: String,
+    pub scheduled_start: DateTime<Utc>,
+    pub scheduled_end: DateTime<Utc>,
+    pub status: String,
+    pub started_at: Option<DateTime<Utc>>,
+    pub completed_at: Option<DateTime<Utc>>,
+    pub inspection_result: Option<String>,
+    pub findings: Option<String>,
+    pub completed_risk_level: Option<String>,
+    pub notes: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreatePatrolTask {
+    pub building_id: Uuid,
+    pub personnel_id: Option<Uuid>,
+    pub task_name: String,
+    pub task_type: String,
+    pub risk_level: Option<String>,
+    pub scheduled_start: DateTime<Utc>,
+    pub scheduled_end: DateTime<Utc>,
+    pub notes: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdatePatrolTask {
+    pub personnel_id: Option<Uuid>,
+    pub task_name: Option<String>,
+    pub task_type: Option<String>,
+    pub risk_level: Option<String>,
+    pub scheduled_start: Option<DateTime<Utc>>,
+    pub scheduled_end: Option<DateTime<Utc>>,
+    pub status: Option<String>,
+    pub notes: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CompletePatrolTask {
+    pub inspection_result: String,
+    pub findings: Option<String>,
+    pub completed_risk_level: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct AlertEscalation {
+    pub id: Uuid,
+    pub alert_id: Uuid,
+    pub previous_level: i32,
+    pub new_level: i32,
+    pub escalation_reason: String,
+    pub notified_person_id: Option<Uuid>,
+    pub notified_at: Option<DateTime<Utc>>,
+    pub escalation_time: DateTime<Utc>,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateAlertEscalation {
+    pub alert_id: Uuid,
+    pub previous_level: i32,
+    pub new_level: i32,
+    pub escalation_reason: String,
+    pub notified_person_id: Option<Uuid>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct BuildingInspectionRecord {
+    pub id: Uuid,
+    pub building_id: Uuid,
+    pub inspector_id: Option<Uuid>,
+    pub inspection_date: DateTime<Utc>,
+    pub risk_level_before: Option<String>,
+    pub risk_level_after: Option<String>,
+    pub findings: Option<String>,
+    pub rectification_status: String,
+    pub rectification_deadline: Option<DateTime<Utc>>,
+    pub rectification_completed_at: Option<DateTime<Utc>>,
+    pub rectification_notes: Option<String>,
+    pub alert_count: i32,
+    pub hotspot_count: i32,
+    pub notes: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateBuildingInspectionRecord {
+    pub building_id: Uuid,
+    pub inspector_id: Option<Uuid>,
+    pub inspection_date: DateTime<Utc>,
+    pub risk_level_before: Option<String>,
+    pub risk_level_after: Option<String>,
+    pub findings: Option<String>,
+    pub rectification_status: Option<String>,
+    pub rectification_deadline: Option<DateTime<Utc>>,
+    pub rectification_notes: Option<String>,
+    pub alert_count: Option<i32>,
+    pub hotspot_count: Option<i32>,
+    pub notes: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateBuildingInspectionRecord {
+    pub inspector_id: Option<Uuid>,
+    pub inspection_date: Option<DateTime<Utc>>,
+    pub risk_level_before: Option<String>,
+    pub risk_level_after: Option<String>,
+    pub findings: Option<String>,
+    pub rectification_status: Option<String>,
+    pub rectification_deadline: Option<DateTime<Utc>>,
+    pub rectification_notes: Option<String>,
+    pub alert_count: Option<i32>,
+    pub hotspot_count: Option<i32>,
+    pub notes: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -4,10 +4,12 @@ use std::time::Duration;
 use uuid::Uuid;
 
 use crate::models::{
-    Building, CreateAlert, CreateBuilding, CreateHotspot, CreatePatrolLocation,
-    CreatePatrolPersonnel, CreateResponsiblePerson, CreateThermalData, CreateThermalDevice,
-    HighRiskStats, Hotspot, PatrolLocation, PatrolPersonnel, ResponsiblePerson, RiskStatsSummary,
-    ThermalData, ThermalDevice, UpdateBuilding,
+    AlertDispatch, AlertEscalation, Building, BuildingInspectionRecord, CompletePatrolTask, CreateAlert,
+    CreateAlertDispatch, CreateAlertEscalation, CreateBuilding, CreateBuildingInspectionRecord, CreateHotspot,
+    CreatePatrolLocation, CreatePatrolPersonnel, CreatePatrolTask, CreateResponsiblePerson,
+    CreateThermalData, CreateThermalDevice, HighRiskStats, Hotspot, PatrolLocation, PatrolPersonnel,
+    PatrolTask, ResponsiblePerson, RiskStatsSummary, ThermalData, ThermalDevice,
+    UpdateBuilding, UpdateBuildingInspectionRecord, UpdatePatrolTask,
 };
 
 pub type DbPool = SqlitePool;
@@ -50,9 +52,21 @@ pub async fn init_pool(database_url: &str) -> DbPool {
 }
 
 pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
-    let migration_sql = std::fs::read_to_string("./migrations/001_initial_schema.sql")
-        .map_err(|e| sqlx::Error::Configuration(Box::new(e)))?;
-    sqlx::query(&migration_sql).execute(pool).await?;
+    let migration_files = vec![
+        "./migrations/001_initial_schema.sql",
+        "./migrations/002_feature_modules.sql",
+    ];
+
+    for migration_file in migration_files {
+        let migration_sql = std::fs::read_to_string(migration_file)
+            .map_err(|e| sqlx::Error::Configuration(Box::new(e)))?;
+        for statement in migration_sql.split(';') {
+            let trimmed = statement.trim();
+            if !trimmed.is_empty() {
+                sqlx::query(trimmed).execute(pool).await?;
+            }
+        }
+    }
 
     let rows = sqlx::query("PRAGMA table_info(buildings)")
         .fetch_all(pool)
@@ -80,6 +94,58 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
     if !has_icon {
         log::info!("Adding 'icon' column to buildings table...");
         sqlx::query("ALTER TABLE buildings ADD COLUMN icon TEXT")
+            .execute(pool)
+            .await?;
+    }
+
+    let alert_rows = sqlx::query("PRAGMA table_info(alerts)")
+        .fetch_all(pool)
+        .await?;
+
+    let alert_cols: Vec<String> = alert_rows
+        .iter()
+        .map(|r| r.try_get::<String, _>("name").unwrap_or_default())
+        .collect();
+
+    if !alert_cols.iter().any(|c| c == "dispatched_to") {
+        log::info!("Adding 'dispatched_to' column to alerts table...");
+        sqlx::query("ALTER TABLE alerts ADD COLUMN dispatched_to TEXT REFERENCES patrol_personnel(id) ON DELETE SET NULL")
+            .execute(pool)
+            .await?;
+    }
+    if !alert_cols.iter().any(|c| c == "dispatched_at") {
+        log::info!("Adding 'dispatched_at' column to alerts table...");
+        sqlx::query("ALTER TABLE alerts ADD COLUMN dispatched_at TEXT")
+            .execute(pool)
+            .await?;
+    }
+    if !alert_cols.iter().any(|c| c == "arrived_at") {
+        log::info!("Adding 'arrived_at' column to alerts table...");
+        sqlx::query("ALTER TABLE alerts ADD COLUMN arrived_at TEXT")
+            .execute(pool)
+            .await?;
+    }
+    if !alert_cols.iter().any(|c| c == "handling_notes") {
+        log::info!("Adding 'handling_notes' column to alerts table...");
+        sqlx::query("ALTER TABLE alerts ADD COLUMN handling_notes TEXT")
+            .execute(pool)
+            .await?;
+    }
+    if !alert_cols.iter().any(|c| c == "escalation_level") {
+        log::info!("Adding 'escalation_level' column to alerts table...");
+        sqlx::query("ALTER TABLE alerts ADD COLUMN escalation_level INTEGER NOT NULL DEFAULT 0")
+            .execute(pool)
+            .await?;
+    }
+    if !alert_cols.iter().any(|c| c == "ack_timeout_minutes") {
+        log::info!("Adding 'ack_timeout_minutes' column to alerts table...");
+        sqlx::query("ALTER TABLE alerts ADD COLUMN ack_timeout_minutes INTEGER NOT NULL DEFAULT 30")
+            .execute(pool)
+            .await?;
+    }
+    if !alert_cols.iter().any(|c| c == "resolve_timeout_minutes") {
+        log::info!("Adding 'resolve_timeout_minutes' column to alerts table...");
+        sqlx::query("ALTER TABLE alerts ADD COLUMN resolve_timeout_minutes INTEGER NOT NULL DEFAULT 120")
             .execute(pool)
             .await?;
     }
@@ -1133,8 +1199,9 @@ pub mod alerts {
             r#"
             INSERT INTO alerts (
                 id, hotspot_id, building_id, alert_type, title, description,
-                severity, status, latitude, longitude, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?)
+                severity, status, latitude, longitude, escalation_level,
+                ack_timeout_minutes, resolve_timeout_minutes, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, 0, 30, 120, ?, ?)
             RETURNING
                 id,
                 hotspot_id,
@@ -1150,6 +1217,13 @@ pub mod alerts {
                 acknowledged_at,
                 resolved_by,
                 resolved_at,
+                dispatched_to,
+                dispatched_at,
+                arrived_at,
+                handling_notes,
+                escalation_level,
+                ack_timeout_minutes,
+                resolve_timeout_minutes,
                 created_at,
                 updated_at
             "#
@@ -1187,6 +1261,13 @@ pub mod alerts {
                 acknowledged_at,
                 resolved_by,
                 resolved_at,
+                dispatched_to,
+                dispatched_at,
+                arrived_at,
+                handling_notes,
+                escalation_level,
+                ack_timeout_minutes,
+                resolve_timeout_minutes,
                 created_at,
                 updated_at
             FROM alerts WHERE id = ?
@@ -1215,6 +1296,13 @@ pub mod alerts {
                 acknowledged_at,
                 resolved_by,
                 resolved_at,
+                dispatched_to,
+                dispatched_at,
+                arrived_at,
+                handling_notes,
+                escalation_level,
+                ack_timeout_minutes,
+                resolve_timeout_minutes,
                 created_at,
                 updated_at
             FROM alerts ORDER BY created_at DESC LIMIT ?
@@ -1247,6 +1335,13 @@ pub mod alerts {
                 acknowledged_at,
                 resolved_by,
                 resolved_at,
+                dispatched_to,
+                dispatched_at,
+                arrived_at,
+                handling_notes,
+                escalation_level,
+                ack_timeout_minutes,
+                resolve_timeout_minutes,
                 created_at,
                 updated_at
             FROM alerts WHERE building_id = ? ORDER BY created_at DESC LIMIT ?
@@ -1280,6 +1375,13 @@ pub mod alerts {
                 acknowledged_at,
                 resolved_by,
                 resolved_at,
+                dispatched_to,
+                dispatched_at,
+                arrived_at,
+                handling_notes,
+                escalation_level,
+                ack_timeout_minutes,
+                resolve_timeout_minutes,
                 created_at,
                 updated_at
             FROM alerts WHERE status = ? ORDER BY created_at DESC LIMIT ?
@@ -1311,6 +1413,97 @@ pub mod alerts {
         .execute(pool)
         .await?;
         Ok(result.rows_affected() > 0)
+    }
+
+    pub async fn dispatch(
+        pool: &DbPool,
+        alert_id: Uuid,
+        personnel_id: Uuid,
+        reason: &str,
+    ) -> Result<AlertDispatch, sqlx::Error> {
+        let now = Utc::now();
+        let dispatch = alert_dispatches::create(
+            pool,
+            CreateAlertDispatch {
+                alert_id,
+                dispatched_by: None,
+                dispatched_to: personnel_id,
+                dispatch_reason: reason.to_string(),
+            },
+        )
+        .await?;
+        sqlx::query(
+            r#"
+            UPDATE alerts
+            SET dispatched_to = ?, dispatched_at = ?, status = 'dispatched', updated_at = ?
+            WHERE id = ?
+            "#
+        )
+        .bind(personnel_id)
+        .bind(now)
+        .bind(now)
+        .bind(alert_id)
+        .execute(pool)
+        .await?;
+        Ok(dispatch)
+    }
+
+    pub async fn arrive(
+        pool: &DbPool,
+        alert_id: Uuid,
+    ) -> Result<bool, sqlx::Error> {
+        let now = Utc::now();
+        let result = sqlx::query(
+            r#"
+            UPDATE alerts
+            SET arrived_at = ?, status = 'handling', updated_at = ?
+            WHERE id = ?
+            "#
+        )
+        .bind(now)
+        .bind(now)
+        .bind(alert_id)
+        .execute(pool)
+        .await?;
+        Ok(result.rows_affected() > 0)
+    }
+
+    pub async fn escalate(
+        pool: &DbPool,
+        alert_id: Uuid,
+        new_level: i32,
+        reason: &str,
+        notified_person_id: Option<Uuid>,
+    ) -> Result<AlertEscalation, sqlx::Error> {
+        let alert = get_by_id(pool, alert_id)
+            .await?
+            .ok_or_else(|| sqlx::Error::RowNotFound)?;
+        let previous_level = alert.escalation_level;
+        let escalation = alert_escalations::create(
+            pool,
+            CreateAlertEscalation {
+                alert_id,
+                previous_level,
+                new_level,
+                escalation_reason: reason.to_string(),
+                notified_person_id,
+            },
+        )
+        .await?;
+        let now = Utc::now();
+        sqlx::query(
+            r#"
+            UPDATE alerts
+            SET escalation_level = ?, updated_at = ?
+            WHERE id = ?
+            "#
+        )
+        .bind(new_level)
+        .bind(now)
+        .bind(alert_id)
+        .execute(pool)
+        .await?;
+        Ok(escalation)
     }
 
     pub async fn resolve(
@@ -1847,6 +2040,1098 @@ pub mod alert_playback {
         .bind(alert_id)
         .fetch_optional(pool)
         .await
+    }
+}
+
+pub mod alert_dispatches {
+    use super::*;
+
+    pub async fn create(pool: &DbPool, data: CreateAlertDispatch) -> Result<AlertDispatch, sqlx::Error> {
+        let id = Uuid::new_v4();
+        let now = Utc::now();
+        sqlx::query_as::<_, AlertDispatch>(
+            r#"
+            INSERT INTO alert_dispatches (
+                id, alert_id, dispatched_by, dispatched_to, dispatch_reason,
+                status, dispatched_at, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?)
+            RETURNING
+                id,
+                alert_id,
+                dispatched_by,
+                dispatched_to,
+                dispatch_reason,
+                status,
+                dispatched_at,
+                accepted_at,
+                arrived_at,
+                handled_at,
+                closed_at,
+                handling_notes,
+                created_at,
+                updated_at
+            "#
+        )
+        .bind(id)
+        .bind(data.alert_id)
+        .bind(data.dispatched_by)
+        .bind(data.dispatched_to)
+        .bind(&data.dispatch_reason)
+        .bind(now)
+        .bind(now)
+        .bind(now)
+        .fetch_one(pool)
+        .await
+    }
+
+    pub async fn get_by_id(pool: &DbPool, id: Uuid) -> Result<Option<AlertDispatch>, sqlx::Error> {
+        sqlx::query_as::<_, AlertDispatch>(
+            r#"
+            SELECT
+                id,
+                alert_id,
+                dispatched_by,
+                dispatched_to,
+                dispatch_reason,
+                status,
+                dispatched_at,
+                accepted_at,
+                arrived_at,
+                handled_at,
+                closed_at,
+                handling_notes,
+                created_at,
+                updated_at
+            FROM alert_dispatches WHERE id = ?
+            "#
+        )
+        .bind(id)
+        .fetch_optional(pool)
+        .await
+    }
+
+    pub async fn list_by_alert(pool: &DbPool, alert_id: Uuid) -> Result<Vec<AlertDispatch>, sqlx::Error> {
+        sqlx::query_as::<_, AlertDispatch>(
+            r#"
+            SELECT
+                id,
+                alert_id,
+                dispatched_by,
+                dispatched_to,
+                dispatch_reason,
+                status,
+                dispatched_at,
+                accepted_at,
+                arrived_at,
+                handled_at,
+                closed_at,
+                handling_notes,
+                created_at,
+                updated_at
+            FROM alert_dispatches WHERE alert_id = ? ORDER BY dispatched_at DESC
+            "#
+        )
+        .bind(alert_id)
+        .fetch_all(pool)
+        .await
+    }
+
+    pub async fn list_by_personnel(pool: &DbPool, personnel_id: Uuid) -> Result<Vec<AlertDispatch>, sqlx::Error> {
+        sqlx::query_as::<_, AlertDispatch>(
+            r#"
+            SELECT
+                id,
+                alert_id,
+                dispatched_by,
+                dispatched_to,
+                dispatch_reason,
+                status,
+                dispatched_at,
+                accepted_at,
+                arrived_at,
+                handled_at,
+                closed_at,
+                handling_notes,
+                created_at,
+                updated_at
+            FROM alert_dispatches WHERE dispatched_to = ? ORDER BY dispatched_at DESC
+            "#
+        )
+        .bind(personnel_id)
+        .fetch_all(pool)
+        .await
+    }
+
+    pub async fn list(pool: &DbPool, limit: i32) -> Result<Vec<AlertDispatch>, sqlx::Error> {
+        sqlx::query_as::<_, AlertDispatch>(
+            r#"
+            SELECT
+                id,
+                alert_id,
+                dispatched_by,
+                dispatched_to,
+                dispatch_reason,
+                status,
+                dispatched_at,
+                accepted_at,
+                arrived_at,
+                handled_at,
+                closed_at,
+                handling_notes,
+                created_at,
+                updated_at
+            FROM alert_dispatches ORDER BY dispatched_at DESC LIMIT ?
+            "#
+        )
+        .bind(limit)
+        .fetch_all(pool)
+        .await
+    }
+
+    pub async fn accept(pool: &DbPool, id: Uuid) -> Result<Option<AlertDispatch>, sqlx::Error> {
+        let now = Utc::now();
+        sqlx::query_as::<_, AlertDispatch>(
+            r#"
+            UPDATE alert_dispatches
+            SET status = 'accepted', accepted_at = ?, updated_at = ?
+            WHERE id = ?
+            RETURNING
+                id,
+                alert_id,
+                dispatched_by,
+                dispatched_to,
+                dispatch_reason,
+                status,
+                dispatched_at,
+                accepted_at,
+                arrived_at,
+                handled_at,
+                closed_at,
+                handling_notes,
+                created_at,
+                updated_at
+            "#
+        )
+        .bind(now)
+        .bind(now)
+        .bind(id)
+        .fetch_optional(pool)
+        .await
+    }
+
+    pub async fn arrive(pool: &DbPool, id: Uuid, notes: Option<String>) -> Result<Option<AlertDispatch>, sqlx::Error> {
+        let now = Utc::now();
+        sqlx::query_as::<_, AlertDispatch>(
+            r#"
+            UPDATE alert_dispatches
+            SET status = 'arrived', arrived_at = ?, handling_notes = COALESCE(?, handling_notes), updated_at = ?
+            WHERE id = ?
+            RETURNING
+                id,
+                alert_id,
+                dispatched_by,
+                dispatched_to,
+                dispatch_reason,
+                status,
+                dispatched_at,
+                accepted_at,
+                arrived_at,
+                handled_at,
+                closed_at,
+                handling_notes,
+                created_at,
+                updated_at
+            "#
+        )
+        .bind(now)
+        .bind(notes)
+        .bind(now)
+        .bind(id)
+        .fetch_optional(pool)
+        .await
+    }
+
+    pub async fn handle(pool: &DbPool, id: Uuid, notes: Option<String>) -> Result<Option<AlertDispatch>, sqlx::Error> {
+        let now = Utc::now();
+        sqlx::query_as::<_, AlertDispatch>(
+            r#"
+            UPDATE alert_dispatches
+            SET status = 'handled', handled_at = ?, handling_notes = COALESCE(?, handling_notes), updated_at = ?
+            WHERE id = ?
+            RETURNING
+                id,
+                alert_id,
+                dispatched_by,
+                dispatched_to,
+                dispatch_reason,
+                status,
+                dispatched_at,
+                accepted_at,
+                arrived_at,
+                handled_at,
+                closed_at,
+                handling_notes,
+                created_at,
+                updated_at
+            "#
+        )
+        .bind(now)
+        .bind(notes)
+        .bind(now)
+        .bind(id)
+        .fetch_optional(pool)
+        .await
+    }
+
+    pub async fn close(pool: &DbPool, id: Uuid, notes: Option<String>) -> Result<Option<AlertDispatch>, sqlx::Error> {
+        let now = Utc::now();
+        sqlx::query_as::<_, AlertDispatch>(
+            r#"
+            UPDATE alert_dispatches
+            SET status = 'closed', closed_at = ?, handling_notes = COALESCE(?, handling_notes), updated_at = ?
+            WHERE id = ?
+            RETURNING
+                id,
+                alert_id,
+                dispatched_by,
+                dispatched_to,
+                dispatch_reason,
+                status,
+                dispatched_at,
+                accepted_at,
+                arrived_at,
+                handled_at,
+                closed_at,
+                handling_notes,
+                created_at,
+                updated_at
+            "#
+        )
+        .bind(now)
+        .bind(notes)
+        .bind(now)
+        .bind(id)
+        .fetch_optional(pool)
+        .await
+    }
+
+    pub async fn update_status(pool: &DbPool, id: Uuid, status: &str, notes: Option<String>) -> Result<Option<AlertDispatch>, sqlx::Error> {
+        let now = Utc::now();
+        sqlx::query_as::<_, AlertDispatch>(
+            r#"
+            UPDATE alert_dispatches
+            SET status = ?, handling_notes = COALESCE(?, handling_notes), updated_at = ?
+            WHERE id = ?
+            RETURNING
+                id,
+                alert_id,
+                dispatched_by,
+                dispatched_to,
+                dispatch_reason,
+                status,
+                dispatched_at,
+                accepted_at,
+                arrived_at,
+                handled_at,
+                closed_at,
+                handling_notes,
+                created_at,
+                updated_at
+            "#
+        )
+        .bind(status)
+        .bind(notes)
+        .bind(now)
+        .bind(id)
+        .fetch_optional(pool)
+        .await
+    }
+
+    pub async fn delete(pool: &DbPool, id: Uuid) -> Result<bool, sqlx::Error> {
+        let result = sqlx::query("DELETE FROM alert_dispatches WHERE id = ?")
+            .bind(id)
+            .execute(pool)
+            .await?;
+        Ok(result.rows_affected() > 0)
+    }
+}
+
+pub mod patrol_tasks {
+    use super::*;
+    use chrono::{Datelike, Timelike};
+
+    pub async fn create(pool: &DbPool, data: CreatePatrolTask) -> Result<PatrolTask, sqlx::Error> {
+        let id = Uuid::new_v4();
+        let now = Utc::now();
+        let risk_level = data.risk_level.unwrap_or_else(|| "medium".to_string());
+        sqlx::query_as::<_, PatrolTask>(
+            r#"
+            INSERT INTO patrol_tasks (
+                id, building_id, personnel_id, task_name, task_type, risk_level,
+                scheduled_start, scheduled_end, status, notes, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)
+            RETURNING
+                id,
+                building_id,
+                personnel_id,
+                task_name,
+                task_type,
+                risk_level,
+                scheduled_start,
+                scheduled_end,
+                status,
+                started_at,
+                completed_at,
+                inspection_result,
+                findings,
+                completed_risk_level,
+                notes,
+                created_at,
+                updated_at
+            "#
+        )
+        .bind(id)
+        .bind(data.building_id)
+        .bind(data.personnel_id)
+        .bind(&data.task_name)
+        .bind(&data.task_type)
+        .bind(&risk_level)
+        .bind(data.scheduled_start)
+        .bind(data.scheduled_end)
+        .bind(&data.notes)
+        .bind(now)
+        .bind(now)
+        .fetch_one(pool)
+        .await
+    }
+
+    pub async fn get_by_id(pool: &DbPool, id: Uuid) -> Result<Option<PatrolTask>, sqlx::Error> {
+        sqlx::query_as::<_, PatrolTask>(
+            r#"
+            SELECT
+                id,
+                building_id,
+                personnel_id,
+                task_name,
+                task_type,
+                risk_level,
+                scheduled_start,
+                scheduled_end,
+                status,
+                started_at,
+                completed_at,
+                inspection_result,
+                findings,
+                completed_risk_level,
+                notes,
+                created_at,
+                updated_at
+            FROM patrol_tasks WHERE id = ?
+            "#
+        )
+        .bind(id)
+        .fetch_optional(pool)
+        .await
+    }
+
+    pub async fn list_by_building(pool: &DbPool, building_id: Uuid) -> Result<Vec<PatrolTask>, sqlx::Error> {
+        sqlx::query_as::<_, PatrolTask>(
+            r#"
+            SELECT
+                id,
+                building_id,
+                personnel_id,
+                task_name,
+                task_type,
+                risk_level,
+                scheduled_start,
+                scheduled_end,
+                status,
+                started_at,
+                completed_at,
+                inspection_result,
+                findings,
+                completed_risk_level,
+                notes,
+                created_at,
+                updated_at
+            FROM patrol_tasks WHERE building_id = ? ORDER BY scheduled_start DESC
+            "#
+        )
+        .bind(building_id)
+        .fetch_all(pool)
+        .await
+    }
+
+    pub async fn list_by_personnel(pool: &DbPool, personnel_id: Uuid) -> Result<Vec<PatrolTask>, sqlx::Error> {
+        sqlx::query_as::<_, PatrolTask>(
+            r#"
+            SELECT
+                id,
+                building_id,
+                personnel_id,
+                task_name,
+                task_type,
+                risk_level,
+                scheduled_start,
+                scheduled_end,
+                status,
+                started_at,
+                completed_at,
+                inspection_result,
+                findings,
+                completed_risk_level,
+                notes,
+                created_at,
+                updated_at
+            FROM patrol_tasks WHERE personnel_id = ? ORDER BY scheduled_start DESC
+            "#
+        )
+        .bind(personnel_id)
+        .fetch_all(pool)
+        .await
+    }
+
+    pub async fn list_by_status(pool: &DbPool, status: &str) -> Result<Vec<PatrolTask>, sqlx::Error> {
+        sqlx::query_as::<_, PatrolTask>(
+            r#"
+            SELECT
+                id,
+                building_id,
+                personnel_id,
+                task_name,
+                task_type,
+                risk_level,
+                scheduled_start,
+                scheduled_end,
+                status,
+                started_at,
+                completed_at,
+                inspection_result,
+                findings,
+                completed_risk_level,
+                notes,
+                created_at,
+                updated_at
+            FROM patrol_tasks WHERE status = ? ORDER BY scheduled_start DESC
+            "#
+        )
+        .bind(status)
+        .fetch_all(pool)
+        .await
+    }
+
+    pub async fn list(pool: &DbPool, limit: i32) -> Result<Vec<PatrolTask>, sqlx::Error> {
+        sqlx::query_as::<_, PatrolTask>(
+            r#"
+            SELECT
+                id,
+                building_id,
+                personnel_id,
+                task_name,
+                task_type,
+                risk_level,
+                scheduled_start,
+                scheduled_end,
+                status,
+                started_at,
+                completed_at,
+                inspection_result,
+                findings,
+                completed_risk_level,
+                notes,
+                created_at,
+                updated_at
+            FROM patrol_tasks ORDER BY scheduled_start DESC LIMIT ?
+            "#
+        )
+        .bind(limit)
+        .fetch_all(pool)
+        .await
+    }
+
+    pub async fn start(pool: &DbPool, id: Uuid) -> Result<Option<PatrolTask>, sqlx::Error> {
+        let now = Utc::now();
+        sqlx::query_as::<_, PatrolTask>(
+            r#"
+            UPDATE patrol_tasks
+            SET status = 'in_progress', started_at = ?, updated_at = ?
+            WHERE id = ?
+            RETURNING
+                id,
+                building_id,
+                personnel_id,
+                task_name,
+                task_type,
+                risk_level,
+                scheduled_start,
+                scheduled_end,
+                status,
+                started_at,
+                completed_at,
+                inspection_result,
+                findings,
+                completed_risk_level,
+                notes,
+                created_at,
+                updated_at
+            "#
+        )
+        .bind(now)
+        .bind(now)
+        .bind(id)
+        .fetch_optional(pool)
+        .await
+    }
+
+    pub async fn complete(
+        pool: &DbPool,
+        id: Uuid,
+        data: CompletePatrolTask,
+    ) -> Result<Option<PatrolTask>, sqlx::Error> {
+        let now = Utc::now();
+        sqlx::query_as::<_, PatrolTask>(
+            r#"
+            UPDATE patrol_tasks
+            SET status = 'completed', completed_at = ?, inspection_result = ?, findings = ?, completed_risk_level = ?, updated_at = ?
+            WHERE id = ?
+            RETURNING
+                id,
+                building_id,
+                personnel_id,
+                task_name,
+                task_type,
+                risk_level,
+                scheduled_start,
+                scheduled_end,
+                status,
+                started_at,
+                completed_at,
+                inspection_result,
+                findings,
+                completed_risk_level,
+                notes,
+                created_at,
+                updated_at
+            "#
+        )
+        .bind(now)
+        .bind(&data.inspection_result)
+        .bind(&data.findings)
+        .bind(&data.completed_risk_level)
+        .bind(now)
+        .bind(id)
+        .fetch_optional(pool)
+        .await
+    }
+
+    pub async fn update(
+        pool: &DbPool,
+        id: Uuid,
+        data: UpdatePatrolTask,
+    ) -> Result<Option<PatrolTask>, sqlx::Error> {
+        let existing = get_by_id(pool, id).await?;
+        if existing.is_none() {
+            return Ok(None);
+        }
+        let existing = existing.unwrap();
+        let now = Utc::now();
+
+        sqlx::query_as::<_, PatrolTask>(
+            r#"
+            UPDATE patrol_tasks SET
+                personnel_id = COALESCE(?, personnel_id),
+                task_name = COALESCE(?, task_name),
+                task_type = COALESCE(?, task_type),
+                risk_level = COALESCE(?, risk_level),
+                scheduled_start = COALESCE(?, scheduled_start),
+                scheduled_end = COALESCE(?, scheduled_end),
+                status = COALESCE(?, status),
+                notes = COALESCE(?, notes),
+                updated_at = ?
+            WHERE id = ?
+            RETURNING
+                id,
+                building_id,
+                personnel_id,
+                task_name,
+                task_type,
+                risk_level,
+                scheduled_start,
+                scheduled_end,
+                status,
+                started_at,
+                completed_at,
+                inspection_result,
+                findings,
+                completed_risk_level,
+                notes,
+                created_at,
+                updated_at
+            "#
+        )
+        .bind(data.personnel_id.or(existing.personnel_id))
+        .bind(data.task_name.unwrap_or(existing.task_name))
+        .bind(data.task_type.unwrap_or(existing.task_type))
+        .bind(data.risk_level.unwrap_or(existing.risk_level))
+        .bind(data.scheduled_start.unwrap_or(existing.scheduled_start))
+        .bind(data.scheduled_end.unwrap_or(existing.scheduled_end))
+        .bind(data.status.unwrap_or(existing.status))
+        .bind(data.notes.or(existing.notes))
+        .bind(now)
+        .bind(id)
+        .fetch_optional(pool)
+        .await
+    }
+
+    pub async fn delete(pool: &DbPool, id: Uuid) -> Result<bool, sqlx::Error> {
+        let result = sqlx::query("DELETE FROM patrol_tasks WHERE id = ?")
+            .bind(id)
+            .execute(pool)
+            .await?;
+        Ok(result.rows_affected() > 0)
+    }
+
+    pub async fn generate_daily_tasks(
+        pool: &DbPool,
+        date: DateTime<Utc>,
+    ) -> Result<Vec<PatrolTask>, sqlx::Error> {
+        let buildings = buildings::list(pool).await?;
+        let personnel = patrol_personnel::list(pool).await?;
+        let mut created_tasks = Vec::new();
+
+        if personnel.is_empty() {
+            return Ok(created_tasks);
+        }
+
+        let mut personnel_idx = 0;
+        for building in &buildings {
+            let risk = building.risk_level.as_deref().unwrap_or("medium");
+            let task_count = match risk {
+                "high" | "critical" => 2,
+                "medium" => 1,
+                "low" => {
+                    let day_of_year = date.ordinal();
+                    if day_of_year % 2 == 0 { 1 } else { 0 }
+                }
+                _ => 1,
+            };
+
+            for i in 0..task_count {
+                let start_hour = if task_count == 1 { 9 } else { if i == 0 { 9 } else { 15 } };
+                let scheduled_start = date
+                    .with_hour(start_hour)
+                    .unwrap_or(date)
+                    .with_minute(0)
+                    .unwrap_or(date)
+                    .with_second(0)
+                    .unwrap_or(date);
+                let scheduled_end = scheduled_start + chrono::Duration::hours(2);
+                let assigned_personnel = &personnel[personnel_idx % personnel.len()];
+                personnel_idx += 1;
+
+                let task = create(
+                    pool,
+                    CreatePatrolTask {
+                        building_id: building.id,
+                        personnel_id: Some(assigned_personnel.id),
+                        task_name: format!("{} 日常巡防 - 第{}次", building.name, i + 1),
+                        task_type: "routine".to_string(),
+                        risk_level: building.risk_level.clone(),
+                        scheduled_start,
+                        scheduled_end,
+                        notes: None,
+                    },
+                )
+                .await?;
+                created_tasks.push(task);
+            }
+        }
+
+        Ok(created_tasks)
+    }
+}
+
+pub mod alert_escalations {
+    use super::*;
+
+    pub async fn create(pool: &DbPool, data: CreateAlertEscalation) -> Result<AlertEscalation, sqlx::Error> {
+        let id = Uuid::new_v4();
+        let now = Utc::now();
+        let notified_at = if data.notified_person_id.is_some() { Some(now) } else { None };
+        sqlx::query_as::<_, AlertEscalation>(
+            r#"
+            INSERT INTO alert_escalations (
+                id, alert_id, previous_level, new_level, escalation_reason,
+                notified_person_id, notified_at, escalation_time, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            RETURNING
+                id,
+                alert_id,
+                previous_level,
+                new_level,
+                escalation_reason,
+                notified_person_id,
+                notified_at,
+                escalation_time,
+                created_at
+            "#
+        )
+        .bind(id)
+        .bind(data.alert_id)
+        .bind(data.previous_level)
+        .bind(data.new_level)
+        .bind(&data.escalation_reason)
+        .bind(data.notified_person_id)
+        .bind(notified_at)
+        .bind(now)
+        .bind(now)
+        .fetch_one(pool)
+        .await
+    }
+
+    pub async fn get_by_id(pool: &DbPool, id: Uuid) -> Result<Option<AlertEscalation>, sqlx::Error> {
+        sqlx::query_as::<_, AlertEscalation>(
+            r#"
+            SELECT
+                id,
+                alert_id,
+                previous_level,
+                new_level,
+                escalation_reason,
+                notified_person_id,
+                notified_at,
+                escalation_time,
+                created_at
+            FROM alert_escalations WHERE id = ?
+            "#
+        )
+        .bind(id)
+        .fetch_optional(pool)
+        .await
+    }
+
+    pub async fn list_by_alert(pool: &DbPool, alert_id: Uuid) -> Result<Vec<AlertEscalation>, sqlx::Error> {
+        sqlx::query_as::<_, AlertEscalation>(
+            r#"
+            SELECT
+                id,
+                alert_id,
+                previous_level,
+                new_level,
+                escalation_reason,
+                notified_person_id,
+                notified_at,
+                escalation_time,
+                created_at
+            FROM alert_escalations WHERE alert_id = ? ORDER BY escalation_time DESC
+            "#
+        )
+        .bind(alert_id)
+        .fetch_all(pool)
+        .await
+    }
+
+    pub async fn list(pool: &DbPool, limit: i32) -> Result<Vec<AlertEscalation>, sqlx::Error> {
+        sqlx::query_as::<_, AlertEscalation>(
+            r#"
+            SELECT
+                id,
+                alert_id,
+                previous_level,
+                new_level,
+                escalation_reason,
+                notified_person_id,
+                notified_at,
+                escalation_time,
+                created_at
+            FROM alert_escalations ORDER BY escalation_time DESC LIMIT ?
+            "#
+        )
+        .bind(limit)
+        .fetch_all(pool)
+        .await
+    }
+}
+
+pub mod building_inspection_records {
+    use super::*;
+
+    pub async fn create(pool: &DbPool, data: CreateBuildingInspectionRecord) -> Result<BuildingInspectionRecord, sqlx::Error> {
+        let id = Uuid::new_v4();
+        let now = Utc::now();
+        let rectification_status = data.rectification_status.unwrap_or_else(|| "pending".to_string());
+        let alert_count = data.alert_count.unwrap_or(0);
+        let hotspot_count = data.hotspot_count.unwrap_or(0);
+        sqlx::query_as::<_, BuildingInspectionRecord>(
+            r#"
+            INSERT INTO building_inspection_records (
+                id, building_id, inspector_id, inspection_date, risk_level_before, risk_level_after,
+                findings, rectification_status, rectification_deadline, rectification_notes,
+                alert_count, hotspot_count, notes, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            RETURNING
+                id,
+                building_id,
+                inspector_id,
+                inspection_date,
+                risk_level_before,
+                risk_level_after,
+                findings,
+                rectification_status,
+                rectification_deadline,
+                rectification_completed_at,
+                rectification_notes,
+                alert_count,
+                hotspot_count,
+                notes,
+                created_at,
+                updated_at
+            "#
+        )
+        .bind(id)
+        .bind(data.building_id)
+        .bind(data.inspector_id)
+        .bind(data.inspection_date)
+        .bind(&data.risk_level_before)
+        .bind(&data.risk_level_after)
+        .bind(&data.findings)
+        .bind(&rectification_status)
+        .bind(data.rectification_deadline)
+        .bind(&data.rectification_notes)
+        .bind(alert_count)
+        .bind(hotspot_count)
+        .bind(&data.notes)
+        .bind(now)
+        .bind(now)
+        .fetch_one(pool)
+        .await
+    }
+
+    pub async fn get_by_id(pool: &DbPool, id: Uuid) -> Result<Option<BuildingInspectionRecord>, sqlx::Error> {
+        sqlx::query_as::<_, BuildingInspectionRecord>(
+            r#"
+            SELECT
+                id,
+                building_id,
+                inspector_id,
+                inspection_date,
+                risk_level_before,
+                risk_level_after,
+                findings,
+                rectification_status,
+                rectification_deadline,
+                rectification_completed_at,
+                rectification_notes,
+                alert_count,
+                hotspot_count,
+                notes,
+                created_at,
+                updated_at
+            FROM building_inspection_records WHERE id = ?
+            "#
+        )
+        .bind(id)
+        .fetch_optional(pool)
+        .await
+    }
+
+    pub async fn list_by_building(pool: &DbPool, building_id: Uuid) -> Result<Vec<BuildingInspectionRecord>, sqlx::Error> {
+        sqlx::query_as::<_, BuildingInspectionRecord>(
+            r#"
+            SELECT
+                id,
+                building_id,
+                inspector_id,
+                inspection_date,
+                risk_level_before,
+                risk_level_after,
+                findings,
+                rectification_status,
+                rectification_deadline,
+                rectification_completed_at,
+                rectification_notes,
+                alert_count,
+                hotspot_count,
+                notes,
+                created_at,
+                updated_at
+            FROM building_inspection_records WHERE building_id = ? ORDER BY inspection_date DESC
+            "#
+        )
+        .bind(building_id)
+        .fetch_all(pool)
+        .await
+    }
+
+    pub async fn list_by_status(pool: &DbPool, status: &str) -> Result<Vec<BuildingInspectionRecord>, sqlx::Error> {
+        sqlx::query_as::<_, BuildingInspectionRecord>(
+            r#"
+            SELECT
+                id,
+                building_id,
+                inspector_id,
+                inspection_date,
+                risk_level_before,
+                risk_level_after,
+                findings,
+                rectification_status,
+                rectification_deadline,
+                rectification_completed_at,
+                rectification_notes,
+                alert_count,
+                hotspot_count,
+                notes,
+                created_at,
+                updated_at
+            FROM building_inspection_records WHERE rectification_status = ? ORDER BY inspection_date DESC
+            "#
+        )
+        .bind(status)
+        .fetch_all(pool)
+        .await
+    }
+
+    pub async fn list(pool: &DbPool, limit: i32) -> Result<Vec<BuildingInspectionRecord>, sqlx::Error> {
+        sqlx::query_as::<_, BuildingInspectionRecord>(
+            r#"
+            SELECT
+                id,
+                building_id,
+                inspector_id,
+                inspection_date,
+                risk_level_before,
+                risk_level_after,
+                findings,
+                rectification_status,
+                rectification_deadline,
+                rectification_completed_at,
+                rectification_notes,
+                alert_count,
+                hotspot_count,
+                notes,
+                created_at,
+                updated_at
+            FROM building_inspection_records ORDER BY inspection_date DESC LIMIT ?
+            "#
+        )
+        .bind(limit)
+        .fetch_all(pool)
+        .await
+    }
+
+    pub async fn update(
+        pool: &DbPool,
+        id: Uuid,
+        data: UpdateBuildingInspectionRecord,
+    ) -> Result<Option<BuildingInspectionRecord>, sqlx::Error> {
+        let existing = get_by_id(pool, id).await?;
+        if existing.is_none() {
+            return Ok(None);
+        }
+        let existing = existing.unwrap();
+        let now = Utc::now();
+
+        sqlx::query_as::<_, BuildingInspectionRecord>(
+            r#"
+            UPDATE building_inspection_records SET
+                inspector_id = COALESCE(?, inspector_id),
+                inspection_date = COALESCE(?, inspection_date),
+                risk_level_before = COALESCE(?, risk_level_before),
+                risk_level_after = COALESCE(?, risk_level_after),
+                findings = COALESCE(?, findings),
+                rectification_status = COALESCE(?, rectification_status),
+                rectification_deadline = COALESCE(?, rectification_deadline),
+                rectification_notes = COALESCE(?, rectification_notes),
+                alert_count = COALESCE(?, alert_count),
+                hotspot_count = COALESCE(?, hotspot_count),
+                notes = COALESCE(?, notes),
+                updated_at = ?
+            WHERE id = ?
+            RETURNING
+                id,
+                building_id,
+                inspector_id,
+                inspection_date,
+                risk_level_before,
+                risk_level_after,
+                findings,
+                rectification_status,
+                rectification_deadline,
+                rectification_completed_at,
+                rectification_notes,
+                alert_count,
+                hotspot_count,
+                notes,
+                created_at,
+                updated_at
+            "#
+        )
+        .bind(data.inspector_id.or(existing.inspector_id))
+        .bind(data.inspection_date.unwrap_or(existing.inspection_date))
+        .bind(data.risk_level_before.or(existing.risk_level_before))
+        .bind(data.risk_level_after.or(existing.risk_level_after))
+        .bind(data.findings.or(existing.findings))
+        .bind(data.rectification_status.unwrap_or(existing.rectification_status))
+        .bind(data.rectification_deadline.or(existing.rectification_deadline))
+        .bind(data.rectification_notes.or(existing.rectification_notes))
+        .bind(data.alert_count.unwrap_or(existing.alert_count))
+        .bind(data.hotspot_count.unwrap_or(existing.hotspot_count))
+        .bind(data.notes.or(existing.notes))
+        .bind(now)
+        .bind(id)
+        .fetch_optional(pool)
+        .await
+    }
+
+    pub async fn update_rectification(
+        pool: &DbPool,
+        id: Uuid,
+        status: &str,
+        notes: Option<String>,
+    ) -> Result<Option<BuildingInspectionRecord>, sqlx::Error> {
+        let now = Utc::now();
+        let completed_at = if status == "completed" { Some(now) } else { None };
+        sqlx::query_as::<_, BuildingInspectionRecord>(
+            r#"
+            UPDATE building_inspection_records
+            SET rectification_status = ?, rectification_notes = COALESCE(?, rectification_notes),
+                rectification_completed_at = COALESCE(?, rectification_completed_at), updated_at = ?
+            WHERE id = ?
+            RETURNING
+                id,
+                building_id,
+                inspector_id,
+                inspection_date,
+                risk_level_before,
+                risk_level_after,
+                findings,
+                rectification_status,
+                rectification_deadline,
+                rectification_completed_at,
+                rectification_notes,
+                alert_count,
+                hotspot_count,
+                notes,
+                created_at,
+                updated_at
+            "#
+        )
+        .bind(status)
+        .bind(notes)
+        .bind(completed_at)
+        .bind(now)
+        .bind(id)
+        .fetch_optional(pool)
+        .await
+    }
+
+    pub async fn delete(pool: &DbPool, id: Uuid) -> Result<bool, sqlx::Error> {
+        let result = sqlx::query("DELETE FROM building_inspection_records WHERE id = ?")
+            .bind(id)
+            .execute(pool)
+            .await?;
+        Ok(result.rows_affected() > 0)
     }
 }
 

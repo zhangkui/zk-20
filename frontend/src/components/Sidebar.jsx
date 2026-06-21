@@ -7,6 +7,9 @@ const menuItems = [
   { path: '/thermal', label: '热成像监控', icon: '🌡️' },
   { path: '/patrol', label: '巡防定位', icon: '📍' },
   { path: '/alerts', label: '告警管理', icon: '⚠️' },
+  { path: '/alert-dispatch', label: '告警派单', icon: '📨' },
+  { path: '/patrol-tasks', label: '巡防任务', icon: '📋' },
+  { path: '/building-ledger', label: '巡检台账', icon: '📒' },
   { path: '/personnel', label: '责任人员', icon: '👥' },
   { path: '/statistics', label: '统计分析', icon: '📈' },
 ];

@@ -104,6 +104,53 @@ export const alerts = {
   resolve: (id, personnelId) => put(`/alerts/${id}/resolve`, { personnel_id: personnelId }),
   getPlayback: (id) => get(`/alerts/${id}/playback`),
   createPlayback: (id, data) => post(`/alerts/${id}/playback`, data),
+  dispatch: (id, personnelId, dispatchReason) =>
+    post(`/alerts/${id}/dispatch`, { personnel_id: personnelId, dispatch_reason: dispatchReason }),
+  arrive: (id, personnelId) => put(`/alerts/${id}/arrive`, { personnel_id: personnelId }),
+  escalate: (id, newLevel, escalationReason, notifiedPersonId) =>
+    put(`/alerts/${id}/escalate`, {
+      new_level: newLevel,
+      escalation_reason: escalationReason,
+      notified_person_id: notifiedPersonId,
+    }),
+};
+
+export const alertDispatches = {
+  list: (params = {}) => get('/alert-dispatches', params),
+  get: (id) => get(`/alert-dispatches/${id}`),
+  getByAlert: (alertId) => get(`/alert-dispatches/alert/${alertId}`),
+  getByPersonnel: (personnelId) => get(`/alert-dispatches/personnel/${personnelId}`),
+  create: (data) => post('/alert-dispatches', data),
+  accept: (id) => put(`/alert-dispatches/${id}/accept`),
+  arrive: (id) => put(`/alert-dispatches/${id}/arrive`),
+  handle: (id, handlingNotes) => put(`/alert-dispatches/${id}/handle`, { handling_notes: handlingNotes }),
+  close: (id, handlingNotes) => put(`/alert-dispatches/${id}/close`, { handling_notes: handlingNotes }),
+  delete: (id) => del(`/alert-dispatches/${id}`),
+};
+
+export const patrolTasks = {
+  list: (params = {}) => get('/patrol-tasks', params),
+  get: (id) => get(`/patrol-tasks/${id}`),
+  getByBuilding: (buildingId) => get(`/patrol-tasks/building/${buildingId}`),
+  getByPersonnel: (personnelId) => get(`/patrol-tasks/personnel/${personnelId}`),
+  getByStatus: (status) => get('/patrol-tasks/status', { status }),
+  create: (data) => post('/patrol-tasks', data),
+  update: (id, data) => put(`/patrol-tasks/${id}`, data),
+  start: (id) => put(`/patrol-tasks/${id}/start`),
+  complete: (id, data) => put(`/patrol-tasks/${id}/complete`, data),
+  delete: (id) => del(`/patrol-tasks/${id}`),
+  generateDaily: (date) => post('/patrol-tasks/generate-daily', { date }),
+};
+
+export const buildingInspections = {
+  list: (params = {}) => get('/building-inspections', params),
+  get: (id) => get(`/building-inspections/${id}`),
+  getByBuilding: (buildingId) => get(`/building-inspections/building/${buildingId}`),
+  getByRectificationStatus: (status) => get('/building-inspections/rectification-status', { status }),
+  create: (data) => post('/building-inspections', data),
+  update: (id, data) => put(`/building-inspections/${id}`, data),
+  updateRectification: (id, data) => put(`/building-inspections/${id}/rectification`, data),
+  delete: (id) => del(`/building-inspections/${id}`),
 };
 
 export const responsiblePersons = {
@@ -128,6 +175,9 @@ export default {
   patrolPersonnel,
   patrolLocations,
   alerts,
+  alertDispatches,
+  patrolTasks,
+  buildingInspections,
   responsiblePersons,
   statistics,
 };
