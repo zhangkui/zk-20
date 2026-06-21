@@ -1,6 +1,5 @@
 use chrono::{DateTime, Utc};
 use sqlx::{sqlite::SqlitePoolOptions, SqlitePool, Row};
-use std::path::Path;
 use std::time::Duration;
 use uuid::Uuid;
 
@@ -16,14 +15,18 @@ pub type DbPool = SqlitePool;
 fn ensure_data_dir(database_url: &str) {
     let url = database_url.strip_prefix("sqlite://").unwrap_or(database_url);
     let url = url.strip_prefix("sqlite:").unwrap_or(url);
-    let path = url.split('?').next().unwrap_or("");
+    let path_str = url.split('?').next().unwrap_or("");
     
-    if !path.is_empty() {
-        if let Some(parent) = Path::new(path).parent() {
-            if !parent.as_os_str().is_empty() {
-                if let Err(e) = std::fs::create_dir_all(parent) {
-                    eprintln!("Warning: Failed to create data directory {:?}: {}", parent, e);
-                }
+    if path_str.is_empty() {
+        return;
+    }
+
+    let path = std::path::Path::new(path_str);
+    if let Some(parent) = path.parent() {
+        let parent_str = parent.to_string_lossy();
+        if !parent_str.is_empty() && parent_str != "." && parent_str != ".." {
+            if let Err(e) = std::fs::create_dir_all(parent) {
+                eprintln!("Warning: Failed to create data directory {:?}: {}", parent, e);
             }
         }
     }
@@ -50,6 +53,37 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
     let migration_sql = std::fs::read_to_string("./migrations/001_initial_schema.sql")
         .map_err(|e| sqlx::Error::Configuration(Box::new(e)))?;
     sqlx::query(&migration_sql).execute(pool).await?;
+
+    let rows = sqlx::query("PRAGMA table_info(buildings)")
+        .fetch_all(pool)
+        .await?;
+
+    let mut has_status = false;
+    let mut has_icon = false;
+    for row in rows {
+        let name: String = row.try_get("name")?;
+        if name == "status" {
+            has_status = true;
+        }
+        if name == "icon" {
+            has_icon = true;
+        }
+    }
+
+    if !has_status {
+        log::info!("Adding 'status' column to buildings table...");
+        sqlx::query("ALTER TABLE buildings ADD COLUMN status TEXT NOT NULL DEFAULT 'active'")
+            .execute(pool)
+            .await?;
+    }
+
+    if !has_icon {
+        log::info!("Adding 'icon' column to buildings table...");
+        sqlx::query("ALTER TABLE buildings ADD COLUMN icon TEXT")
+            .execute(pool)
+            .await?;
+    }
+
     Ok(())
 }
 

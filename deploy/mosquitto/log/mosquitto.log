@@ -910,3 +910,19 @@
 1782005776: Client zk-20-backend-docker closed its connection.
 1782005776: mosquitto version 2.0.22 terminating
 1782005776: Saving in-memory database to /mosquitto/data//mosquitto.db.
+1782009232: mosquitto version 2.0.22 starting
+1782009232: Config loaded from /mosquitto/config/mosquitto.conf.
+1782009232: Opening ipv4 listen socket on port 1883.
+1782009232: Opening ipv6 listen socket on port 1883.
+1782009232: Opening websockets listen socket on port 9001.
+1782009232: mosquitto version 2.0.22 running
+1782009639: mosquitto version 2.0.22 terminating
+1782009639: Saving in-memory database to /mosquitto/data//mosquitto.db.
+1782010805: mosquitto version 2.0.22 starting
+1782010805: Config loaded from /mosquitto/config/mosquitto.conf.
+1782010805: Opening ipv4 listen socket on port 1883.
+1782010805: Opening ipv6 listen socket on port 1883.
+1782010805: Opening websockets listen socket on port 9001.
+1782010805: mosquitto version 2.0.22 running
+1782011619: mosquitto version 2.0.22 terminating
+1782011619: Saving in-memory database to /mosquitto/data//mosquitto.db.
