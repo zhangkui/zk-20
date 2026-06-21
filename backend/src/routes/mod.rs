@@ -30,6 +30,7 @@ fn buildings_routes() -> impl HttpServiceFactory {
         .route("", web::get().to(handlers::buildings::list))
         .route("/{id}", web::get().to(handlers::buildings::get_by_id))
         .route("/{id}", web::put().to(handlers::buildings::update))
+        .route("/{id}/toggle-status", web::put().to(handlers::buildings::toggle_status))
         .route("/{id}", web::delete().to(handlers::buildings::delete))
 }
 

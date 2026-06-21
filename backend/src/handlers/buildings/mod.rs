@@ -55,6 +55,20 @@ pub async fn update(
     }
 }
 
+pub async fn toggle_status(
+    pool: web::Data<SqlitePool>,
+    id: web::Path<Uuid>,
+) -> impl Responder {
+    match db::buildings::toggle_status(pool.get_ref(), id.into_inner()).await {
+        Ok(Some(building)) => HttpResponse::Ok().json(ApiResponse::success(building)),
+        Ok(None) => HttpResponse::NotFound().json(ApiResponse::<Building>::error("Building not found")),
+        Err(e) => HttpResponse::InternalServerError().json(ApiResponse::<Building>::error(&format!(
+            "Failed to toggle building status: {}",
+            e
+        ))),
+    }
+}
+
 pub async fn delete(pool: web::Data<SqlitePool>, id: web::Path<Uuid>) -> impl Responder {
     match db::buildings::delete(pool.get_ref(), id.into_inner()).await {
         Ok(true) => HttpResponse::Ok().json(ApiResponse::success(serde_json::json!({

@@ -54,6 +54,7 @@ export const buildings = {
   create: (data) => post('/buildings', data),
   update: (id, data) => put(`/buildings/${id}`, data),
   delete: (id) => del(`/buildings/${id}`),
+  toggleStatus: (id) => put(`/buildings/${id}/toggle-status`),
 };
 
 export const devices = {

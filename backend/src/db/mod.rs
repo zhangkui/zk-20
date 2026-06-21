@@ -59,13 +59,14 @@ pub mod buildings {
     pub async fn create(pool: &DbPool, data: CreateBuilding) -> Result<Building, sqlx::Error> {
         let id = Uuid::new_v4();
         let now = Utc::now();
+        let status = data.status.unwrap_or_else(|| "active".to_string());
         sqlx::query_as::<_, Building>(
             r#"
             INSERT INTO buildings (
                 id, name, description, address, latitude, longitude,
                 area, building_type, construction_year, floors, risk_level,
-                geometry, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                geometry, status, icon, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             RETURNING
                 id,
                 name,
@@ -79,6 +80,8 @@ pub mod buildings {
                 floors,
                 risk_level,
                 geometry,
+                status,
+                icon,
                 created_at,
                 updated_at
             "#
@@ -95,6 +98,8 @@ pub mod buildings {
         .bind(data.floors)
         .bind(&data.risk_level)
         .bind(&data.geometry)
+        .bind(&status)
+        .bind(&data.icon)
         .bind(now)
         .bind(now)
         .fetch_one(pool)
@@ -117,6 +122,8 @@ pub mod buildings {
                 floors,
                 risk_level,
                 geometry,
+                status,
+                icon,
                 created_at,
                 updated_at
             FROM buildings WHERE id = ?
@@ -143,6 +150,8 @@ pub mod buildings {
                 floors,
                 risk_level,
                 geometry,
+                status,
+                icon,
                 created_at,
                 updated_at
             FROM buildings ORDER BY created_at DESC
@@ -178,6 +187,8 @@ pub mod buildings {
                 floors = COALESCE(?, floors),
                 risk_level = COALESCE(?, risk_level),
                 geometry = COALESCE(?, geometry),
+                status = COALESCE(?, status),
+                icon = COALESCE(?, icon),
                 updated_at = ?
             WHERE id = ?
             RETURNING
@@ -193,6 +204,8 @@ pub mod buildings {
                 floors,
                 risk_level,
                 geometry,
+                status,
+                icon,
                 created_at,
                 updated_at
             "#
@@ -208,6 +221,49 @@ pub mod buildings {
         .bind(data.floors.or(existing.floors))
         .bind(data.risk_level.or(existing.risk_level))
         .bind(data.geometry.or(existing.geometry))
+        .bind(data.status.unwrap_or(existing.status))
+        .bind(data.icon.or(existing.icon))
+        .bind(now)
+        .bind(id)
+        .fetch_optional(pool)
+        .await
+    }
+
+    pub async fn toggle_status(pool: &DbPool, id: Uuid) -> Result<Option<Building>, sqlx::Error> {
+        let existing = get_by_id(pool, id).await?;
+        if existing.is_none() {
+            return Ok(None);
+        }
+        let existing = existing.unwrap();
+        let new_status = if existing.status == "active" { "inactive" } else { "active" };
+        let now = Utc::now();
+
+        sqlx::query_as::<_, Building>(
+            r#"
+            UPDATE buildings SET
+                status = ?,
+                updated_at = ?
+            WHERE id = ?
+            RETURNING
+                id,
+                name,
+                description,
+                address,
+                latitude,
+                longitude,
+                area,
+                building_type,
+                construction_year,
+                floors,
+                risk_level,
+                geometry,
+                status,
+                icon,
+                created_at,
+                updated_at
+            "#
+        )
+        .bind(new_status)
         .bind(now)
         .bind(id)
         .fetch_optional(pool)
@@ -1781,15 +1837,15 @@ pub mod seed {
 
         log::info!("Seeding buildings data...");
         let buildings_data = vec![
-            ("大雄宝殿", "北京市东城区景山前街4号", 39.9163, 116.3972, "宫殿建筑", 1500.0, 1750, 3, "high"),
-            ("藏经阁", "北京市东城区景山前街4号", 39.9165, 116.3975, "楼阁建筑", 800.0, 1800, 2, "medium"),
-            ("钟楼", "北京市东城区景山前街4号", 39.9167, 116.3978, "钟楼建筑", 300.0, 1760, 2, "medium"),
-            ("鼓楼", "北京市东城区钟楼湾临字9号", 39.9424, 116.4025, "鼓楼建筑", 400.0, 1770, 2, "low"),
-            ("故宫角楼", "北京市东城区景山前街4号", 39.9140, 116.3910, "角楼建筑", 200.0, 1780, 1, "high"),
+            ("大雄宝殿", "北京市东城区景山前街4号", 39.9163, 116.3972, "宫殿建筑", 1500.0, 1750, 3, "high", "🏛️"),
+            ("藏经阁", "北京市东城区景山前街4号", 39.9165, 116.3975, "楼阁建筑", 800.0, 1800, 2, "medium", "📚"),
+            ("钟楼", "北京市东城区景山前街4号", 39.9167, 116.3978, "钟楼建筑", 300.0, 1760, 2, "medium", "🔔"),
+            ("鼓楼", "北京市东城区钟楼湾临字9号", 39.9424, 116.4025, "鼓楼建筑", 400.0, 1770, 2, "low", "🥁"),
+            ("故宫角楼", "北京市东城区景山前街4号", 39.9140, 116.3910, "角楼建筑", 200.0, 1780, 1, "high", "🏯"),
         ];
 
         let mut building_ids = Vec::new();
-        for (name, address, lat, lng, btype, area, year, floors, risk) in buildings_data {
+        for (name, address, lat, lng, btype, area, year, floors, risk, icon) in buildings_data {
             let building = buildings::create(pool, CreateBuilding {
                 name: name.to_string(),
                 description: Some(format!("{} - 古建筑", name)),
@@ -1802,6 +1858,8 @@ pub mod seed {
                 floors: Some(floors),
                 risk_level: Some(risk.to_string()),
                 geometry: None,
+                status: Some("active".to_string()),
+                icon: Some(icon.to_string()),
             }).await?;
             building_ids.push(building.id);
         }

@@ -103,6 +103,51 @@ export const actions = {
     }
   },
 
+  async updateBuilding(id, data) {
+    try {
+      const building = await api.buildings.update(id, data);
+      setState('buildings', (buildings) =>
+        buildings.map((b) => (b.id === id ? building : b))
+      );
+      if (state.selectedBuilding?.id === id) {
+        setState('selectedBuilding', building);
+      }
+      return building;
+    } catch (error) {
+      console.error('Failed to update building:', error);
+      throw error;
+    }
+  },
+
+  async deleteBuilding(id) {
+    try {
+      await api.buildings.delete(id);
+      setState('buildings', (buildings) => buildings.filter((b) => b.id !== id));
+      if (state.selectedBuilding?.id === id) {
+        setState('selectedBuilding', null);
+      }
+    } catch (error) {
+      console.error('Failed to delete building:', error);
+      throw error;
+    }
+  },
+
+  async toggleBuildingStatus(id) {
+    try {
+      const building = await api.buildings.toggleStatus(id);
+      setState('buildings', (buildings) =>
+        buildings.map((b) => (b.id === id ? building : b))
+      );
+      if (state.selectedBuilding?.id === id) {
+        setState('selectedBuilding', building);
+      }
+      return building;
+    } catch (error) {
+      console.error('Failed to toggle building status:', error);
+      throw error;
+    }
+  },
+
   selectBuilding(building) {
     setState('selectedBuilding', building);
     if (building) {

@@ -18,6 +18,8 @@ pub struct Building {
     pub floors: Option<i32>,
     pub risk_level: Option<String>,
     pub geometry: Option<String>,
+    pub status: String,
+    pub icon: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -38,6 +40,8 @@ pub struct CreateBuilding {
     pub floors: Option<i32>,
     pub risk_level: Option<String>,
     pub geometry: Option<String>,
+    pub status: Option<String>,
+    pub icon: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
@@ -54,6 +58,8 @@ pub struct UpdateBuilding {
     pub floors: Option<i32>,
     pub risk_level: Option<String>,
     pub geometry: Option<String>,
+    pub status: Option<String>,
+    pub icon: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]

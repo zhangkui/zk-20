@@ -579,3 +579,69 @@ tr:hover {
     margin-left: 0;
   }
 }
+
+.thermal-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: thermal-spin 0.8s linear infinite;
+}
+
+@keyframes thermal-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.thermal-legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.thermal-legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.thermal-legend-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.custom-building-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-lg);
+}
+
+.leaflet-popup-content {
+  margin: var(--spacing-md) !important;
+  font-family: var(--font-family);
+}
+
+.building-popup .leaflet-popup-content-wrapper {
+  background: var(--color-bg-secondary);
+  color: var(--color-text);
+}
+
+.leaflet-container {
+  font-family: var(--font-family);
+  background: var(--color-bg);
+}
+
+.leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.8) !important;
+  font-size: 10px !important;
+}

@@ -11,9 +11,14 @@ CREATE TABLE IF NOT EXISTS buildings (
     floors INTEGER,
     risk_level TEXT,
     geometry TEXT,
+    status TEXT NOT NULL DEFAULT 'active',
+    icon TEXT,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE buildings ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active';
+ALTER TABLE buildings ADD COLUMN IF NOT EXISTS icon TEXT;
 
 CREATE TABLE IF NOT EXISTS thermal_devices (
     id TEXT PRIMARY KEY,
